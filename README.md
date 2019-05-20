@@ -57,7 +57,8 @@ of the starter files into the repo root. You should then be able to pickup at la
 
 ### 3. Get started!
 
-You ready to start your cloud native project exploration. Open up the step01/README.md and get coding!
+You ready to start your cloud native project exploration. Open up the [step01/README.md](step01/README.md) and get
+coding!
 
 
 _Copyright (c) 2019 RX-M LLC, Cloud Native Consulting, all rights reserved_
