@@ -1,91 +1,21 @@
 ![rx-m LLC][RX-M LLC]
 
-# Step 7. Track It!
+# A Day in the life of a cloud native developer
+
+
+## Step 07 - Logging with Elasticsearch, Fluentd, and Kibana (EFK) Stack
 
 ### 1. Adding Logging to the service
 
-### 2. Adding the Helm Repositories
+### 2. Deploying the Helm Charts
 
-The Helm charts you'll be using to deploy the EFK stack are found on separate GitHub repos, so you'll need to add those
-repos before.
+To deploy the EFK stack, you will use your own values.yaml files to provide your own values to each of the helm charts.
+By passing the `-f` option, you can specify what values file to use. The Helm chart will parse the provided yaml file
+and apply any settings in it that are used by its templates. Helm will use the chart defaults for any values that are
+not provided in the user-defined values.yaml file.
 
-Add the Elastic Helm Chart repository to your Helm:
-
-```
-$ helm repo add elastic https://helm.elastic.co
-
-
-```
-
-The Fluentd Helm chart on the official Helm repo has been depricated and moved to the maintainer's own Helm Repository
-at Kiwigrid.
-
-Now, add the Kiwigrid Helm Chart repository to your Helm:
-
-```
-$ helm repo add kiwigrid https://kiwigrid.github.io
-
-
-```
-
-### 3. Preparing your host
-
-The Elasticsearch helm chart you'll be using requires a persistent volume.
-
-```
-ubuntu@labsys:~$ mkdir /tmp/efk/
-```
-
-Create the following persistent volume spec:
-
-```
-ubuntu@labsys:~$ vim kubecon-eu-2019/step07/efk-pv.yaml
-
-ubuntu@labsys:~$ cat kubecon-eu-2019/step07/efk-pv.yaml
-
-kind: PersistentVolume
-apiVersion: v1
-metadata:
-  name: <YOUR NAME>-efk-pv-volume
-  labels:
-    type: local
-spec:
-  storageClassName: standard
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/tmp/efk"
-
-ubuntu@labsys:~$
-```
-
-Then apply it:
-
-```
-ubuntu@labsys:~$ kubectl apply -f kubecon-eu-2019/step07/efk-pv.yaml
-
-persistentvolume/efk-pv-volume created
-
-ubuntu@labsys:~$
-```
-
-Check that the Persistent volume is created.
-
-```
-ubuntu@labsys:~$ kubectl get pv
-NAME            CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   REASON   AGE
-<YOUR NAME>-efk-pv-volume   1Gi        RWO            Retain           Available           standard                18s
-
-ubuntu@labsys:~$
-```
-
-
-
-### 4. Deploying the Helm Charts
-
-You're now ready to deploy the helm charts:
+You're now ready to deploy the helm charts. First, deploy Elasticsearch, providing the values.yaml file under this
+step's elasticsearch directory:
 
 ```
 ubuntu@labsys:~$ helm install elastic/elasticsearch \
@@ -125,6 +55,9 @@ NOTES:
 ubuntu@labsys:~$
 ```
 
+Next, deploy Kibana. Kibana provides a visualization layer for Elasticsearch data, making it an excellent compliment to
+any Elasticsearch deployment.
+
 ```
 ubuntu@labsys:~$ helm install elastic/kibana \
 -f kubecon-eu-2019/step07/kibana/values.yaml  \
@@ -151,6 +84,7 @@ cal-efk-kibana-kibana  ClusterIP  10.101.87.74  <none>       5601/TCP  0s
 ubuntu@labsys:~$
 ```
 
+Finally, deploy Fluentd. This will allow Kubernetes, and your service, to feed event data into Elasticsearch:
 
 ```
 ubuntu@labsys:~$ helm install kiwigrid/fluentd-elasticsearch \
@@ -199,23 +133,56 @@ including things like IP addresses, container images, and object names will NOT 
 ubuntu@labsys:~$
 ```
 
-### 5. Checking it out
+Wait a few minutes for all of your deployed sources to come online, and soon you'll be able to receive data from it.
 
-Navigate to Kibana
+### 3. Exploring the configuration
 
-Go to Discover
+```
+kubectl get cm cal-efk-fluentd-fluentd-elasticsearch -o yaml
 
-You should be prompted to create an index pattern. There should be an index starting with `logstash` already present. Type "logstash" into the Index Pattern text box.
 
-If Kibana reports "Success! Your index pattern matches ... index" Then click the `> Next step` button.
+```
 
-You will next be prompted to select a time filter. In the dropdown, you will find @timestamp available as a choice, so select it.
+### 4. Checking it out
 
-Click `Create index pattern`
+First, cu
+
+Kibana was deployed with a NodePort service, meaning that you can access it visiting the URL of any of the Kubernetes workers at your own port.
+
+```
+ubuntu@labsys:~$ kubectl get svc
+
+NAME                            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)             AGE
+cal-efk-kibana-kibana           NodePort    10.109.242.62   <none>        5601:32536/TCP      64s
+elasticsearch-master            ClusterIP   10.105.41.133   <none>        9200/TCP,9300/TCP   2m27s
+elasticsearch-master-headless   ClusterIP   None            <none>        9200/TCP            2m27s
+kubernetes                      ClusterIP   10.96.0.1       <none>        443/TCP             5d3h
+
+ubuntu@labsys:~$
+```
+
+Here, you can see that Kibana has routed its port, 5601, to port 32536 on the cluster. In your browser window, enter one
+of the external IP address or FQDN of one of the Kubernetes worker nodes with your port. You should be brought to the
+Kibana welcome page.
+
+Navigate to Kibana:
+
+Go to Discover:
+
+You should be prompted to create an index pattern. There should be an index starting with `logstash` already present.
+
+Type "logstash" into the Index Pattern text box:
+
+If Kibana reports "Success! Your index pattern matches ... index," click the `> Next step` button:
+
+You will next be prompted to select a time filter. In the dropdown, you will find @timestamp available as a choice, so
+select it:
+
+Click `Create index pattern`:
 
 Once it finishes, you should see an index with all the fields.
 
-In the left menu bar, click `Discover` again.
+In the left menu bar, click `Discover` again:
 
 You should now see that Kibana has data in it!
 
