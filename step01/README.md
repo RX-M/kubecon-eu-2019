@@ -58,7 +58,7 @@ Great go is installed and ready to go (har)!
 
 ### 2. Install gRPC and Protobuf
 
-Now install the go gRPC libraries on your cloud based lab system:
+Now install the go gRPC libraries on your cloud based lab system (be patient, this can take a minute):
 
 ```
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ go get -u google.golang.org/grpc
@@ -191,9 +191,9 @@ Our gRPC service is named OSSProject and it has two methods, ListProjects and Cr
 four messages defined later in the file. this file will be created with a .proto extension. Create the proto file:
 
 ```
-ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ vim project.proto
+ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ vim ossproject.proto
 
-ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ cat project.proto
+ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ cat ossproject.proto
 
 syntax = "proto3";
 
@@ -366,9 +366,12 @@ func main() {
 }
 
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ go run server.go
+
+
 ```
 
-Great the server is up and running!
+Great the server is up and running! Now let's test it with a Go client (when you are done you can stop the server with
+^C).
 
 
 ### 6. Create a test client
@@ -414,6 +417,55 @@ func main() {
         }
         log.Printf("Projects: %v", r)
 }
+```
+
+Create the client program:
+
+```
+ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ vim client.go
+
+ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ cat client.go
+
+package main
+
+import (
+        "context"
+        "log"
+        "os"
+        "time"
+
+        "google.golang.org/grpc"
+        pb "./ossproject"
+)
+
+const (
+        port = ":50088"
+)
+
+func main() {
+        host := os.Args[1]
+        req := os.Args[2]
+        conn, err := grpc.Dial(host+port, grpc.WithInsecure())
+        if err != nil {
+                log.Fatalf("did not connect: %v", err)
+        }
+        defer conn.Close()
+        c := pb.NewOSSProjectClient(conn)
+
+        name := "fluentd"
+        if len(os.Args) > 2 {
+                name = req
+        }
+        ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+        defer cancel()
+        r, err := c.ListProjects(ctx, &pb.ProjectName{Name: name})
+        if err != nil {
+                log.Fatalf("could not get project: %v", err)
+        }
+        log.Printf("Projects: %v", r)
+}
+
+ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$
 ```
 
 This simple command line client takes the ip or hostname to connect to on the command line and the project to lookup.
