@@ -15,8 +15,8 @@ gRPC is fast, typically an order of magnitude or more faster than the equivalent
 
 ### 1. Install Go
 
-We'll build our microservice in go. Go is the language gRPC is written in, and though not required, writing gRPC
-services in go is convenient. Kubernetes and Docker are also written in Go and it is a generally popular language in the
+We'll build our microservice in Go. Go is the language gRPC is written in, and though not required, writing gRPC
+services in Go is convenient. Kubernetes and Docker are also written in Go and it is a generally popular language in the
 container and microservices spaces.
 
 We'll use Go 1.12, clone, extract and install the release:
@@ -43,7 +43,7 @@ ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ source ~/.bash_profile
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$
 ```
 
-Test your go installation:
+Test your Go installation:
 
 ```
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ go version
@@ -53,12 +53,12 @@ go version go1.12 linux/amd64
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$
 ```
 
-Great go is installed and ready to go (har)!
+Great! Go is installed and ready to go (har)!
 
 
 ### 2. Install gRPC and Protobuf
 
-Now install the go gRPC libraries on your cloud based lab system (be patient, this can take a minute):
+Now install the Go gRPC libraries on your cloud based lab system (be patient, this can take a minute):
 
 ```
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ go get -u google.golang.org/grpc
@@ -66,7 +66,7 @@ ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ go get -u google.golang.org/grpc
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$
 ```
 
-Next we'll install Protocol Buffers. The PB release is zipped so first install unzip:
+Next we'll install Protocol Buffers. The PB release is zipped so install unzip first:
 
 ```
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ sudo apt install unzip
@@ -187,8 +187,8 @@ message Project {
 }
 ```
 
-Our gRPC service is named OSSProject and it has two methods, ListProjects and CreateProject. the methods make use of the
-four messages defined later in the file. this file will be created with a .proto extension. Create the proto file:
+Our gRPC service is named OSSProject and it has two methods, ListProjects and CreateProject. The methods make use of the
+four messages defined later in the file. This file will be created with a .proto extension. Create the proto file:
 
 ```
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ vim ossproject.proto
@@ -232,9 +232,9 @@ without having to pass large field names.
 ### 4. Compile the IDL
 
 Interface definitions in proto files are free of any implementation. To make use of them for network RPC we need to
-generate code is some target language. We will use the protoc PB IDL compiler to generate Go code in this step.
+generate code in some target language. We will use the protoc PB IDL compiler to generate Go code in this step.
 
-Before we compile the IDL, export the path to the bin directory where the go gRPC plugin was installed.  
+Before we compile the IDL, export the path to the bin directory where the Go gRPC plugin was installed.  
 
 ```
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ export PATH=$PATH:~/go/bin
@@ -315,7 +315,7 @@ func main() {
 ```
 
 Our service will listen on port 50088 on all interfaces. We use the pb generated RegisterOSSProjectServer to register
-our service with the grpc server. Once running clients can connect and make gRPC calls to either of the two methods.
+our service with the gRPC server. Once running clients can connect and make gRPC calls to either of the two methods.
 
 Now build and run the service:
 
@@ -479,7 +479,7 @@ ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ go run client.go localhost fluentd
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$
 ```
 
-Cool! Working gRPC!! Well, there's a lot more to learn about gRPC but let's move on to contianerd and see how we can
+Cool! Working gRPC!! Well, there's a lot more to learn about gRPC but let's move on to containerd and see how we can
 run this RPC app in a container:  [step02/README.md](step02/README.md)
 
 
