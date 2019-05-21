@@ -11,6 +11,7 @@ metadata:
     name: {{ .Release.Name }}-prometheus
     release: {{ .Release.Name }}
   name: {{ .Release.Name }}-prometheus
+  namespace: {{ .Values.metadata.namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
