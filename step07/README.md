@@ -8,196 +8,187 @@
 Fluentd is a cross platform open-source data collection software project recently graduated and a top level project at
 the CNCF. Fluentd is written primarily in Ruby with C in places where performance is critical.
 
-In this step we'll use fluentd to take the log events from our microservice and formard them to elasticsearch where we
+In this step we'll use Fluentd to take the log events from our microservice and forward them to Elasticsearch where we
 can view them with Kibana (the infamous EFK stack).
 
 
 ### 1. Deploying the Helm Charts
 
-The lab repo includes a helm chart that will deploy most of the EFK stack for you in your personal namespace. To deploy
-the EFK stack, you will use a values.yaml file to fill out the helm templates. Helm will use the chart defaults for any
-values that are not provided in the user-defined values.yaml file.
+The lab repo includes helm charts that will deploy the EFK stack for you in your personal namespace.
 
 First, deploy Elasticsearch, providing the values.yaml file under this step's elasticsearch directory:
 
 ```
-ubuntu@labsys:~$ helm install elastic/elasticsearch \
--f kubecon-eu-2019/step07/elasticsearch/values.yaml  \
---name $INITIALS-efk-es
+ubuntu@labsys:~/kubecon-eu-2019$ helm template ./step07/elasticsearch/. | kubectl create -f -
 
-NAME:   cal-efk-es
-LAST DEPLOYED: Mon May 20 11:18:26 2019
-NAMESPACE: default
-STATUS: DEPLOYED
+poddisruptionbudget.policy/elasticsearch-master-pdb created
+service/elasticsearch-master created
+service/elasticsearch-master-headless created
+pod/release-name-subfz-test created
+statefulset.apps/elasticsearch-master created
 
-RESOURCES:
-==> v1/Pod(related)
-NAME                    READY  STATUS    RESTARTS  AGE
-elasticsearch-master-0  0/1    Init:0/1  0         0s
-
-==> v1/Service
-NAME                           TYPE       CLUSTER-IP      EXTERNAL-IP  PORT(S)            AGE
-elasticsearch-master           ClusterIP  10.107.252.106  <none>       9200/TCP,9300/TCP  0s
-elasticsearch-master-headless  ClusterIP  None            <none>       9200/TCP           0s
-
-==> v1beta1/PodDisruptionBudget
-NAME                      MIN AVAILABLE  MAX UNAVAILABLE  ALLOWED DISRUPTIONS  AGE
-elasticsearch-master-pdb  N/A            1                0                    0s
-
-==> v1beta1/StatefulSet
-NAME                  READY  AGE
-elasticsearch-master  0/1    0s
-
-
-NOTES:
-1. Watch all cluster members come up.
-  $ kubectl get pods --namespace=default -l app=elasticsearch-master -w
-2. Test cluster health using Helm test.
-  $ helm test cal-efk-es
-
-ubuntu@labsys:~$
+ubuntu@labsys:~/kubecon-eu-2019$
 ```
 
 Next, deploy Kibana. Kibana provides a visualization layer for Elasticsearch data, making it an excellent compliment to
 any Elasticsearch deployment.
 
 ```
-ubuntu@labsys:~$ helm install elastic/kibana \
--f kubecon-eu-2019/step07/kibana/values.yaml  \
---name $INITIALS-efk-kibana
+ubuntu@labsys:~/kubecon-eu-2019$ helm template ./step07/kibana/. | kubectl create -f -
 
-NAME:   cal-efk-kibana
-LAST DEPLOYED: Mon May 20 11:18:59 2019
-NAMESPACE: default
-STATUS: DEPLOYED
+service/release-name-kibana created
+deployment.apps/release-name-kibana created
 
-RESOURCES:
-==> v1/Deployment
-NAME                   READY  UP-TO-DATE  AVAILABLE  AGE
-cal-efk-kibana-kibana  0/1    1           0          0s
-
-==> v1/Pod(related)
-NAME                                   READY  STATUS             RESTARTS  AGE
-cal-efk-kibana-kibana-d78957468-dchcr  0/1    ContainerCreating  0         0s
-
-==> v1/Service
-NAME                   TYPE       CLUSTER-IP    EXTERNAL-IP  PORT(S)   AGE
-cal-efk-kibana-kibana  ClusterIP  10.101.87.74  <none>       5601/TCP  0s
-
-ubuntu@labsys:~$
+ubuntu@labsys:~/kubecon-eu-2019$
 ```
 
 Finally, deploy Fluentd. This will allow Kubernetes, and your service, to feed event data into Elasticsearch:
 
 ```
-ubuntu@labsys:~$ helm install kiwigrid/fluentd-elasticsearch \
--f kubecon-eu-2019/step07/fluentd/values.yaml  \
---name $INITIALS-efk-fluentd
+ubuntu@labsys:~/kubecon-eu-2019$ helm template ./step07/fluentd/. | kubectl create -f -
 
-NAME:   cal-efk-fluentd
-LAST DEPLOYED: Mon May 20 11:20:01 2019
-NAMESPACE: default
-STATUS: DEPLOYED
+configmap/release-name-fluentd-elasticsearch created
+serviceaccount/release-name-fluentd-elasticsearch created
+clusterrole.rbac.authorization.k8s.io/release-name-fluentd-elasticsearch created
+clusterrolebinding.rbac.authorization.k8s.io/release-name-fluentd-elasticsearch created
+daemonset.apps/release-name-fluentd-elasticsearch created
 
-RESOURCES:
-==> v1/ClusterRole
-NAME                                   AGE
-cal-efk-fluentd-fluentd-elasticsearch  0s
-
-==> v1/ClusterRoleBinding
-NAME                                   AGE
-cal-efk-fluentd-fluentd-elasticsearch  0s
-
-==> v1/ConfigMap
-NAME                                   DATA  AGE
-cal-efk-fluentd-fluentd-elasticsearch  6     0s
-
-==> v1/DaemonSet
-NAME                                   DESIRED  CURRENT  READY  UP-TO-DATE  AVAILABLE  NODE SELECTOR  AGE
-cal-efk-fluentd-fluentd-elasticsearch  1        1        0      1           0          <none>         0s
-
-==> v1/Pod(related)
-NAME                                         READY  STATUS             RESTARTS  AGE
-cal-efk-fluentd-fluentd-elasticsearch-g22c8  0/1    ContainerCreating  0         0s
-
-==> v1/ServiceAccount
-NAME                                   SECRETS  AGE
-cal-efk-fluentd-fluentd-elasticsearch  1        0s
-
-
-NOTES:
-1. To verify that Fluentd has started, run:
-
-  kubectl --namespace=default get pods -l "app.kubernetes.io/name=fluentd-elasticsearch,app.kubernetes.io/instance=cal-efk-fluentd"
-
-THIS APPLICATION CAPTURES ALL CONSOLE OUTPUT AND FORWARDS IT TO elasticsearch . Anything that might be identifying,
-including things like IP addresses, container images, and object names will NOT be anonymized.
-
-ubuntu@labsys:~$
+ubuntu@labsys:~/kubecon-eu-2019$
 ```
 
 Wait a few minutes for all of your deployed sources to come online, and soon you'll be able to receive data from it.
 
-### 3. Exploring the configuration
+
+
+### 2. Generating Events
+
+Using your `client.go` program to hit the gRPC microservice, send some events corresponding to some of the growing number
+of graduated CNCF projects:
 
 ```
-kubectl get cm cal-efk-fluentd-fluentd-elasticsearch -o yaml
+ubuntu@labsys:~/kubecon-eu-2019$ go run client.go a8e148a6d7b8511e981790ae78cda592-2011153213.eu-central-1.elb.amazonaws.com fluentd
 
+2019/05/20 22:15:01 Projects: name:"fluentd" custodian:"cncf"
 
+ubuntu@labsys:~/kubecon-eu-2019$ go run client.go a8e148a6d7b8511e981790ae78cda592-2011153213.eu-central-1.elb.amazonaws.com containerd
+
+2019/05/20 22:22:26 Projects: name:"containerd" custodian:"cncf"
+
+ubuntu@labsys:~/kubecon-eu-2019$ go run client.go a8e148a6d7b8511e981790ae78cda592-2011153213.eu-central-1.elb.amazonaws.com prometheus
+
+2019/05/20 22:22:32 Projects: name:"prometheus" custodian:"cncf"
+
+ubuntu@labsys:~/kubecon-eu-2019$ go run client.go a8e148a6d7b8511e981790ae78cda592-2011153213.eu-central-1.elb.amazonaws.com kubernetes
+
+2019/05/20 22:22:38 Projects: name:"kubernetes" custodian:"cncf"
+
+ubuntu@labsys:~/kubecon-eu-2019$
 ```
 
-### 4. Checking it out
+Once you're done sending them, grab the logs from each of your ossp deployment pods:
 
-First, cu
+```
+ubuntu@labsys:~/kubecon-eu-2019$ kubectl logs ossp-67469746c-4z6k6
+
+2019/05/21 05:15:01 Received: fluentd
+2019/05/21 05:22:26 Received: containerd
+2019/05/21 05:22:38 Received: kubernetes
+
+ubuntu@labsys:~/kubecon-eu-2019$ kubectl logs ossp-67469746c-slxrz
+
+2019/05/21 05:22:32 Received: prometheus
+
+ubuntu@labsys:~/kubecon-eu-2019$
+```
+
+Keep these events in mind, you will see them again in a more colorful way in the next step.
+
+
+### 3. Visualizing log data
+
+With events sent Elasticsearch through Fluentd, you can now use Kibana to check the events that are coming in from all parts of your Kubernetes cluster (within your namespace).
 
 Kibana was deployed with a NodePort service, meaning that you can access it visiting the URL of any of the Kubernetes workers at your own port.
 
+Retrieve the nodeport for Kibana with `kubectl get svc`:
+
 ```
-ubuntu@labsys:~$ kubectl get svc
+ubuntu@labsys:~/kubecon-eu-2019$ kubectl get svc
 
-NAME                            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)             AGE
-cal-efk-kibana-kibana           NodePort    10.109.242.62   <none>        5601:32536/TCP      64s
-elasticsearch-master            ClusterIP   10.105.41.133   <none>        9200/TCP,9300/TCP   2m27s
-elasticsearch-master-headless   ClusterIP   None            <none>        9200/TCP            2m27s
-kubernetes                      ClusterIP   10.96.0.1       <none>        443/TCP             5d3h
+NAME                            TYPE           CLUSTER-IP      EXTERNAL-IP                                                                  PORT(S)                         AGE
+elasticsearch-master            ClusterIP      10.100.204.85   <none>                                                                       9200/TCP,9300/TCP               4m57s
+elasticsearch-master-headless   ClusterIP      None            <none>                                                                       9200/TCP                        4m57s
+ossp-service                    LoadBalancer   10.100.106.2    a8e148a6d7b8511e981790ae78cda592-2011153213.eu-central-1.elb.amazonaws.com   50088:31113/TCP                 8m6s
+release-name-kibana             NodePort       10.100.122.3    <none>                                                                       5601:32188/TCP                  114s
+release-name-ossp               LoadBalancer   10.100.91.199   a8eece37d7b7b11e981790ae78cda592-1017632840.eu-central-1.elb.amazonaws.com   50088:30691/TCP                 79m
+release-name-prometheus         NodePort       10.100.50.212   <none>                                                                       9090:31294/TCP,3000:32515/TCP   155m
 
-ubuntu@labsys:~$
+ubuntu@labsys:~/kubecon-eu-2019$
 ```
 
-Here, you can see that Kibana has routed its port, 5601, to port 32536 on the cluster. In your browser window, enter one
-of the external IP address or FQDN of one of the Kubernetes worker nodes with your port. You should be brought to the
-Kibana welcome page.
+Here, you can see that Kibana has routed its port, 5601, to port 32536 on the cluster.
 
-Navigate to Kibana:
+In your browser window, enter one of the external IP address or FQDN of one of the Kubernetes worker nodes with your
+port. You should be brought to the Kibana welcome page.
+
+![Welcome to Kibana](./images/kibana-welcome.PNG)
+
+Click "Explore on my Own":
+
+![Welcome to Kibana](./images/kibana-explore.PNG)
 
 Go to Discover:
 
-You should be prompted to create an index pattern. There should be an index starting with `logstash` already present.
+![Welcome to Kibana](./images/kibana-discover.PNG)
+
+You will be prompted to create an index pattern. Kibana needs to be aware of all indicies within Elasticsearch so it can
+formulate effective queries against them to better visualize data. There should be some indices starting with `logstash`
+already present.
+
+The EFK stack is actually an alternative to the ELK (Elasticsearch, Logstash, and Kibana). The only difference is that
+Fluentd takes Logstash's place. By default, Fluentd's Elasticsearch plugin will make it act identical to Logstash, thus
+causing Fluentd to send all events in the same manner as logstash would.
 
 Type "logstash" into the Index Pattern text box:
 
-If Kibana reports "Success! Your index pattern matches ... index," click the `> Next step` button:
+![Creating the logstash index pattern](./images/kibana-create-index-1.PNG)
 
-You will next be prompted to select a time filter. In the dropdown, you will find @timestamp available as a choice, so
-select it:
+If Kibana reports "Success! Your index pattern matches ...," click the `> Next step` button:
 
-Click `Create index pattern`:
 
-Once it finishes, you should see an index with all the fields.
+
+You will next be prompted to select a time filter. This allows Kibana to designate a field within a Fluentd event as a
+sortable time field.
+
+In the dropdown, you will find @timestamp available as a choice, so select it:
+
+![Creating the logstash index pattern](./images/kibana-create-index-2.PNG)
+
+That's it. Click `Create index pattern`. Once it finishes, you should see an index with all the fields:
+
+![Continuing to create the logstash index pattern](./images/kibana-created-index.PNG)
 
 In the left menu bar, click `Discover` again:
 
-You should now see that Kibana has data in it!
+![Kibana sees data!](./images/kibana-discover-populated.PNG)
 
-Click `Add a filter +`
+You should now see that Kibana has data in it! It's quite a lot, so try to filter it down. Try to find the events you sent to the OSSP program earlier.
+
+Click `Add a filter +`:
+
+![Adding Event Filters to Kibana](./images/kibana-addfilter.PNG)
 
 Select the following:
 
-- tag
-- is
-- oss.project
+- kuberntes.container_name is ossp
+- kubernetes.namespace_name is `<Your Namespace>`
 
-You should now see your GRPC service's logs in Kibana!
+And in the top search bar, look for **received**:
+
+![The events you sent to the OSSP service in step 2](./images/ossp-event.PNG)
+
+You should now see your GRPC service's logs in Kibana! Take a minute to look around; with its current setting Fluentd is
+capture all activity coming to all containers within your namespace.
 
 One more piece of the observability triad to go, tracing application calls with Istio:
 [../step08/README.md](../step08/README.md)
