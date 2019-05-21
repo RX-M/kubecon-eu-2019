@@ -146,7 +146,7 @@ Lastly point a browser at https://reg.rx-m.net and again login with the creds: k
 do not change anything.
 
 Ok, we are starting to get things pushed out to the cloud. Next step is to deploy the container in the cloud with
-Kubernetes:  [step04/README.md](step04/README.md)
+Kubernetes:  [../step04/README.md](../step04/README.md)
 
 
 <br>
