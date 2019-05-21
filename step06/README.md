@@ -8,10 +8,10 @@
 
 Prometheus is an open source monitoring and alerting application, often employed to provide application and node-level
 metrics monitoring to Cloud Native application deployments. When paired with Grafana, a powerful visualization tool that
-meshes well with Promtheus, users are given deep insight into the health of their applications.
+meshes well with Prometheus, users are given deep insight into the health of their applications.
 
 Prometheus works by continually collecting, or scraping, open metrics endpoints made available by applications, looking
-at any exposed endpoint at /metrics to collect pertinent data. Data can then be sorted inside the Prometheu GUI,
+at any exposed endpoint at /metrics to collect pertinent data. Data can then be sorted inside the Prometheus GUI,
 where the user can design queries that can aggregate more useful metrics like averages, sums and histograms.
 
 In this step we'll use helm to deploy Prometheus and other resources needed to monitor applications in K8s.
@@ -112,7 +112,7 @@ Wait a moment while the metrics resources come up and online.
 ### 3. Accessing Your Metrics
 
 Take a look at the service deployed with your Prometheus Helm chart. It presents four ports numbers in two mappings.
-Port 9090 in this example is mapped to 31116, while Port 3000 is mapped to 30199,
+Port 9090 in this example is mapped to 31116, while Port 3000 is mapped to 30199.
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019/step06$  kubectl get svc
@@ -172,8 +172,8 @@ Select **Kubernetes: POD Overview**:
 You will be taken to a very simple dashboard that reports the amount of Pods currently reporting Up status to the
 cluster's master Prometheus instance.
 
-Its nice to be able to monitpor things but we are still missing two legs of the observability stool, tracking logs and
-tracing calls, let's start by looking at log management with fluentd: [../step07/README.md](../step07/README.md)
+Its nice to be able to monitor things but we are still missing two legs of the observability stool, tracking logs and
+tracing calls, let's start by looking at log management with Fluentd: [../step07/README.md](../step07/README.md)
 
 
 <br>
