@@ -19,7 +19,7 @@ In this step we're going to explore Istio features from the vantage of our osspr
 
 Navigate to the Istio console (known as Kiali): http://kiali.rx-m.net:15029/kiali/console/
 
-Login as admin/admin.
+Login as admin/CNdev2019
 
 ![login](./images/login.png)
 
