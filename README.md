@@ -4,7 +4,7 @@
 # kubecon-eu-2019
 
 
-## A day in the life of a Cloud Native Dev
+## A Day in the life of a cloud native developer
 
 
 You made it! Good. Now get to work!!!
@@ -47,7 +47,7 @@ ubuntu@ip-172-31-45-121:~$ cd kubecon-eu-2019/
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$
 ```
 
-Steps 1-9 are found in the respective subdirectory (step01, step02, step03, ...). Each step will follow on the heals of
+Steps 1-9 are found in the respective subdirectory (step01, step02, step03, ...). Each step will follow on the heels of
 the last so you can keep all of your work in this directory if you like. Each step has a `starter` directory you can use
 to begin at that step if you didn't have time to finish the last step.
 
