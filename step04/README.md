@@ -293,7 +293,7 @@ ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ kubectl config current-context
 
 arn:aws:eks:eu-central-1:433017611331:cluster/eks-cloud-native-dev
 
-ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ kubectl config current-context
+ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ kubectl config view
 
 arn:aws:eks:eu-central-1:433017611331:cluster/eks-cloud-native-dev
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ kubectl config view
