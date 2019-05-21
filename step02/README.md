@@ -4,23 +4,23 @@
 # A Day in the life of a cloud native developer
 
 
-## Step 02 - Containerd
+## Step 02 - containerd
 
-Containerd has been a graduated top level project at the Cloud Native Computing Foundation since Feburary 2019.
-Developers working on containerd can use the ctr tool to quickly test features and functionality. Containerd is written
-in go and exposes a gRPC API.
+containerd has been a graduated top level project at the Cloud Native Computing Foundation since February 2019.
+Developers working on containerd can use the ctr tool to quickly test features and functionality. containerd is written
+in Go and exposes a gRPC API.
 
 While containerd is a lean and efficient option for running containers, it is not an image build environment. To build
-our application into a container image we'll use Docker. Installing Docker installs Containerd because Docker uses
-Containerd as its low level contianer manager. Contianerd in turn uses the OCI standard runtime runC. You can install
-Contianerd by itself but we'll install Docker and Containerd together.
+our application into a container image we'll use Docker. Installing Docker installs containerd because Docker uses
+containerd as its low level container manager. containerd in turn uses the OCI standard runtime runC. You can install
+containerd by itself but we'll install Docker and containerd together.
 
-After we have used docker to build an image we'll use Containerd directly to run and explore our container.
+After we have used docker to build an image we'll use containerd directly to run and explore our container.
 
 
 ### 1. Install Docker
 
-In your cloud instance, run the following command to install Docker and Containerd:
+In your cloud instance, run the following command to install Docker and containerd:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ wget -qO- https://get.docker.com/ | sh
@@ -73,7 +73,7 @@ No need to execute any of the commands the install output suggests.
 
 ### 2. Run a Test Container
 
-To test our contianer system we will run a simple container, the rx-m hello-world image. First get top level help by
+To test our container system we will run a simple container, the rx-m hello-world image. First get top level help by
 running the ctr command with no arguments:
 
 ```
@@ -179,7 +179,7 @@ hi           docker.io/rxmllc/hello:latest    io.containerd.runtime.v1.linux
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
-Now remove your completed contianer:
+Now remove your completed container:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ sudo ctr container rm hi
@@ -198,8 +198,8 @@ Dockerfiles are usually placed at the root of a folder hierarchy containing ever
 Docker images. This folder is called the build context. The entire build context will be packaged and sent to the Docker
 Engine for building. In simple cases the build context will have nothing in it but a Dockerfile.
 
-We'll use the kubecon dir as our context. Dockerfiles give you repeatable predictable build by using an isolate
-repeatable container environment for the build process. Create a dockerfile with the build steps needed to recreate your
+We'll use the kubecon dir as our context. Dockerfiles give you repeatable, predictable builds by using an isolated,
+repeatable container environment for the build process. Create a Dockerfile with the build steps needed to recreate your
 Go service:
 
 ```
@@ -218,9 +218,9 @@ EXPOSE 50088
 ENTRYPOINT [ "/server" ]
 ```
 
-This type of dockerfile is known as a multistage build. The first stage begins with `FROM golang...` and performs the
+This type of Dockerfile is known as a multistage build. The first stage begins with `FROM golang...` and performs the
 Go build of our source files into an single static executable. Because the resulting executable is statically linked,
-it has not external dependencies and can be copied into a second container image by itself with no other files, to
+it has no external dependencies and can be copied into a second container image by itself with no other files, to
 execute standalone. The second stage of the docker build begins with `FROM scratch` which means the container image is
 not based on a preexisting image.
 
@@ -312,8 +312,8 @@ Now lets test the service!
 
 ### 4. Run the Containerized Service
 
-Docker and Containerd share many things but not container images. Containerd supports namespaces allowing multiple
-independent tenants on top of Containerd. We can however easily export our Docker build to containerd. Try it:
+Docker and containerd share many things but not container images. containerd supports namespaces allowing multiple
+independent tenants on top of containerd. We can however easily export our Docker build to containerd. Try it:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ sudo docker image save ossp > ossp.image
@@ -325,7 +325,7 @@ unpacking docker.io/library/ossp:latest (sha256:490b962d255fe9f65f742651e80d740f
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
-Now use ctr to run you service in its new contianer:
+Now use ctr to run you service in its new container:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ sudo ctr image ls
@@ -350,7 +350,7 @@ ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ go run client.go localhost fluentd
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
-Contianerized service up and running! Now we need to push this image up to a registry so that it can be used in CI/CD
+Containerized service up and running! Now we need to push this image up to a registry so that it can be used in CI/CD
 and other systems:  [../step03/README.md](../step03/README.md)
 
 
