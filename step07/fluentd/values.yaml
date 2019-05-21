@@ -1,3 +1,8 @@
+## metadata - values used by Prometheus Pods
+##
+metadata:
+  namespace: 'cal'
+
 image:
   repository: gcr.io/fluentd-elasticsearch/fluentd
 ## Specify an imagePullPolicy (Required)

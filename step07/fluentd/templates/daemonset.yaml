@@ -13,6 +13,7 @@ metadata:
   annotations:
 {{ toYaml .Values.annotations | indent 4 }}
 {{- end }}
+  namespace: {{ .Values.metadata.namespace }}
 spec:
   updateStrategy:
 {{ toYaml .Values.updateStrategy | indent 4 }}
