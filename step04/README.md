@@ -47,7 +47,7 @@ Processing triggers for libc-bin (2.23-0ubuntu10) ...
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
-Now install the awscli:
+Now install the aws cli:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ pip3 install awscli --upgrade --user
@@ -97,7 +97,7 @@ You should consider upgrading via the 'pip install --upgrade pip' command.
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
-Before we can use the aws cli we need to setup auth keys and zone defaults. Down load the creds here:
+Before we can use the aws cli we need to setup auth keys and zone defaults. Download the creds here:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ wget https://s3.eu-central-1.amazonaws.com/rx-m-kubecon-barcelona/kubecon-barcelona
@@ -270,8 +270,9 @@ Connectivity!
 
 ### 3. Setup a namespace
 
-To keep you services separate from others (other users or other teams) K8s provides namespaces, a means of multitenancy
-in containerized environment. Create a namespace using your initials and your lab system IP address something like this:
+To keep your services separate from others (other users or other teams) K8s provides namespaces, a means of multitenancy
+in containerized environments. Create a namespace using your initials and your lab system IP address, something like
+this:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ kubectl create namespace wra-172-31-30-5
@@ -333,7 +334,7 @@ No resources found.
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
-Great, we have an empty namespace ready to use, now to deploy our service.
+Great, we have an empty namespace ready to use. Now to deploy our service.
 
 
 ### 4. Deploy your containerized service
@@ -431,7 +432,7 @@ ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
 As you can imagine, in a production setting all of the things we have created thus far would be kept in source code
-control and each change we made to the Go code of the service, the Dockerfile packaging code, or the K8s deployment code
+control. Each change we made to the Go code of the service, the Dockerfile packaging code, or the K8s deployment code
 would trigger a CI event and, if successful, eventually a new deployment.
 
 
@@ -528,7 +529,7 @@ Great we have two pods behind our service and a loadbalancer listening on
 
 ### 6. Test the service
 
-To test our service in the cloud, from you lab system rerun your client app with the loadbalancer host name:
+To test our service in the cloud, from your lab system rerun your client app with the loadbalancer host name:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ go run client.go a03552f567b6c11e981790ae78cda592-1560382816.eu-central-1.elb.amazonaws.com fluentd
