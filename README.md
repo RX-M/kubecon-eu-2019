@@ -18,7 +18,7 @@ if you know what you are doing you can probably get everything done on a Mac or 
 Something like this:
 
 ```
-$ ssh -i k8scon-eu-2019.pem ubuntu@4.4.4.4
+$ ssh -i cnd.pem ubuntu@4.4.4.4
 
 ubuntu@ip-172-31-45-121:~$
 ```
