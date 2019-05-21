@@ -480,7 +480,7 @@ ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$
 ```
 
 Cool! Working gRPC!! Well, there's a lot more to learn about gRPC but let's move on to containerd and see how we can
-run this RPC app in a container:  [step02/README.md](step02/README.md)
+run this RPC app in a container:  [../step02/README.md](../step02/README.md)
 
 
 <br>
