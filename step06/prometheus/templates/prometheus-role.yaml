@@ -1,0 +1,19 @@
+{{- /*
+This Role allows Grafana to query for dashboard configMaps from its own Helm Release in its Namespace only
+*/ -}}
+{{- if .Values.prometheus.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  labels:
+    app: prometheus
+    heritage: {{ .Release.Service }}
+    name: {{ .Release.Name }}-prometheus
+    release: {{ .Release.Name }}
+  name: {{ .Release.Name }}-prometheus
+  namespace: {{ .Values.metadata.namespace }}
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "watch", "list"]
+{{- end -}}

@@ -1,0 +1,25 @@
+{{- /*
+This config tells Grafana where to find its datasource
+For more info on provisioning, see: http://docs.grafana.org/administration/provisioning/
+*/ -}}
+{{- if .Values.prometheus.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: prometheus
+    heritage: {{ .Release.Service }}
+    name: {{ .Release.Name }}-grafana-datasource
+    release: {{ .Release.Name }}
+  name: {{ .Release.Name }}-grafana-datasource
+  namespace: {{ .Values.metadata.namespace }}
+data:
+  datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      access: proxy
+      url: http://localhost:9090
+      isDefault: true
+{{- end -}}

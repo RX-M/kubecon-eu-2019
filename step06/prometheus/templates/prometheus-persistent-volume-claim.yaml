@@ -1,0 +1,26 @@
+{{- if .Values.prometheus.enabled }}
+{{- if .Values.prometheus.volumes.prometheusData.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: prometheus
+    heritage: {{ .Release.Service }}
+    name: {{ .Release.Name }}-prometheus-data
+    release: {{ .Release.Name }}
+  name: {{ .Release.Name }}-prometheus-data
+  namespace: {{ .Values.metadata.namespace }}
+spec:
+  accessModes:
+    {{- range .Values.prometheus.volumes.prometheusData.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.prometheus.volumes.prometheusData.size | quote }}
+  {{- if .Values.prometheus.volumes.prometheusData.selector }}
+  selector:
+{{ toYaml .Values.prometheus.volumes.prometheusData.selector | indent 4 }}
+  {{- end }}
+{{- end }}
+{{- end -}}

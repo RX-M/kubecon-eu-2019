@@ -1,0 +1,244 @@
+## metadata - values used by Prometheus Pods
+##
+metadata:
+  namespace: 'cal'
+
+image:
+  ## pullSecrets - specifies that Kubernetes should set credentials into a Secret
+  ##
+  pullSecrets:
+    ## enabled - when true, a Kubernetes Secret will be created and used when pulling images from a private registry
+    ## When false, a secret object will not be created and images will be pulled anonymously
+    ##
+    enabled: false
+    ## credentials - base64 encodes the registry, username, and password into a token used to login to a private regitry
+    ## Best practice is to override value(s) imperatively during install using the --set flag, for example:
+    ##   --set image.pullSecrets.credentials.username=<value> --set image.pullSecrets.credentials.password=<value>
+    ##
+  ## pullPolicy - instructs Kubernetes on behavior to pull images
+  ##
+  pullPolicy: Always
+
+## TLS global values - currently a WIP placeholder
+##
+tls:
+  enabled: false
+  ## Cassandra TLS settings
+  ##
+  # cassandra:
+  ## Prometheus TLS settings
+  ##
+  # prometheus:
+
+
+## TLS global values - currently a WIP placeholder
+
+## --------------------------------------------------------------------------------------------------------------------
+
+## prometheus - values for Prometheus related objects
+## Pod settings are first, followed by individual container variables, by container
+##
+prometheus:
+  ## Prometheus Pod affinity
+  ##
+  affinity: {}
+  ## enabled - when true, deploys a Prometheus instance with Grafana dashboards in a Pod
+  ## The Prometheus instance only receives data about its Cassandra Pods from a master Prometheus server via federation
+  ## When false, none of the Prometheus-related objects will be created
+  ##
+  enabled: true
+  ## nodeSelector - constrains Pods to nodes with particular labels
+  ## Comment out this section and Prometheus will not use a nodeSelector
+  ##
+##  nodeSelector:
+  ##  noderole: worker
+  ## securityContext - Prometheus Pod security only (each container will also have securityContext values)
+  ## Comment out and securityContext settings will not be used
+  ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  ##
+  # securityContext: {}
+  ## service - Prometheus service spec variables
+  ## Ref: https://kubernetes.io/docs/concepts/services-networking/service/
+  ##
+  service:
+    ## annotations - attach arbitrary non-identifying metadata to the Prometheus Service
+    ##
+    # annotations: {}
+    ## ports - Prometheus application ports to expose via the Kubernetes Service
+    ##
+    ports:
+      ## prom - DO NOT DISABLE - the Prometheus custom metrics adapter is dependent on the "prom" port for querying the
+      ##   Prometheus server for metrics
+      ##
+      prom: 9090
+      ## grafana - the port where the Grafana dashboard will be exposed
+      ## Comment out the grafana port to prevent exposing the Grafana dashboard
+      ##
+      grafana: 3000
+    ## type - specify service behavior (ClusterIP, NodePort, LoadBalancer)
+    ##
+    type: NodePort
+  ## NOTE: Each subsequent subsection applies to individual containers that run in the Prometheus Pod
+  ##
+  ## configmapReload - configmap-reload container monitors ConfigMap changes and POSTs to a URL so Prometheus doesn't
+  ##   have to be restarted to update its config
+  ## Ref: https://github.com/jimmidyson/configmap-reload
+  ##
+  configmapReload:
+    ## image - repository and tag information for retrieving the configmap-reload image from a registry
+    ##
+    image:
+      repo: jimmidyson/configmap-reload
+      tag: v0.2.2
+    ## resources - configmap-reload container minimum resource requests and maximum cgroup limits
+    ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+    ##
+    # resources: {}
+    ## securityContext - configmap-reload container security settings
+    ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    ##
+    # securityContext: {}
+  ## grafana - values for the Grafana container, the dashboard for Prometheus
+  ##
+  grafana:
+    ## Grafana login credentials; populates a Kubernetes secret, injected into the container as environment variables
+    ## Best practice is to override value(s) imperatively during install using the --set flag, for example:
+    ##   --set prometheus.grafana.adminPassword=<value>
+    ##
+    adminUser: admin
+    adminPassword: kubecon2019eu
+    ## image - repository and tag information for retrieving the Grafana image from a registry
+    ##
+    image:
+      repo: grafana/grafana
+      tag: 6.0.2
+    ## resources - Grafana container minimum resource requests and maximum cgroup limits
+    ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+    ##
+    # resources: {}
+    ## securityContext - Grafana container security settings
+    ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    ##
+    securityContext:
+      ## runAsUser - specifies that for the Container in the Pod, the first process runs with the specified user ID
+      ## The Grafana default user id is 472 (ref: http://docs.grafana.org/installation/docker/#user-id-changes)
+      ## When prometheus.volumes.grafanaData.enabled is true, the init-grafana-data init container chowns the
+      ##   /var/lib/grafana directory for the grafana container to this uid
+      ## Both Grafana and the Grafana sidecar run as this uid
+      ##
+      runAsUser: 472
+    ## sidecar - Grafana sidecar collects configMaps with the specified label and stores the files into a shared folder
+    ## Requires at Grafana 5.x to work
+    ##
+    sidecar:
+      ## image - repository and tag information for retrieving the Grafana sidecar image from a registry
+      ##
+      image:
+        repo: kiwigrid/k8s-sidecar
+        tag: 0.0.16
+      ## resources - Grafana sidecar container minimum resource requests and maximum cgroup limits
+      ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+      ##
+      # resources: {}
+      ## securityContext - Grafana sidecar container security settings
+      ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+      ##
+      securityContext:
+        ## runAsUser - specifies that for the Container in the Pod, the first process runs with the specified user ID
+        ## The Grafana default user id is 472 (ref: http://docs.grafana.org/installation/docker/#user-id-changes)
+        ## When prometheus.volumes.grafanaData.enabled is true, the init-grafana-data init container chowns the
+        ##   /var/lib/grafana directory for the grafana container to this uid
+        ## Both Grafana and the Grafana sidecar run as this uid
+        ##
+        runAsUser: 472
+  ## When prometheus.volumes.grafanaData.enabled is true, this init container changes ownership of Grafana persistent
+  ##   volume /var/lib/grafana to the uid defined under prometheus.grafana.securityContext.container.runAsUser prior
+  ##   to Grafana container startup
+  ##
+  initGrafData:
+    ## image - repository and tag information for retrieving the init container image from a registry
+    ##
+    image:
+      repo: busybox
+      tag: 1.30.1
+    ## resources - initGrafData container minimum resource requests and maximum cgroup limits
+    ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+    ##
+    # resources: {}
+    ## initGrafData container security settings; while commented out, securityContext settings will not be used
+    ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    ##
+    # securityContext: {}
+  ## When prometheus.volumes.prometheusData.enabled is true, this init container changes ownership of the Prometheus
+  ##   persistent volume /data to the uid defined under prometheus.prometheus-server.securityContext.container.runAsUser
+  ##   in an init container prior to Prometheus server container startup
+  ##
+  initPromData:
+    ## image - repository and tag information for retrieving the init container image from a registry
+    ##
+    image:
+      repo: busybox
+      tag: 1.30.1
+    ## resources - initPromData container minimum resource requests and maximum cgroup limits
+    ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+    ##
+    # resources: {}
+    ## securityContext - initPromData container security settings
+    ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    ##
+    # securityContext: {}
+  ## server - Prometheus server container values
+  ##
+  server:
+    ## config - Prometheus config file values for scraping federated metrics
+    ##
+    config:
+      ## scrape_interval - how frequently to scrape metrics from the Prometheus master
+      ##
+      scrape_interval: 30s
+      ## scrape_timeout - per-scrape timeout when scraping the Prometheus master
+      ##
+      scrape_timeout: 15s
+      ## targets - the Service name and port of the Prometheus master instance for retrieving federated metrics
+      ##
+      targets: prometheus-master.default.svc.cluster.local:9090
+    ## image - repository and tag information for retrieving the Prometheus server image from a registry
+    ##
+    image:
+      repo: prom/prometheus
+      tag: v2.8.1
+    ## resources - Prometheus server container minimum resource requests and maximum cgroup limits
+    ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+    ##
+    # resources: {}
+    ## retention - Prometheus data retention policy; value populates a Prometheus startup flag
+    ## Ref: https://prometheus.io/docs/prometheus/latest/storage/#operational-aspects
+    ##
+    retention: 1d
+    ## securityContext - Prometheus server container security settings
+    ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    ##
+    securityContext:
+      ## runAsUser - specifies that for the Container in the Pod, the first process runs with the specified user ID
+      ## This is the default user Prometheus runs as
+      ## When prometheus.volumes.prometheusData.enabled is true, an init container changes ownership of the Prometheus
+      ##   persistent volume /data to the uid defined here
+      ##
+      runAsUser: 65534
+  ## volumes - Prometheus and Grafana persistent volume claim variables
+  ##
+  volumes:
+
+    grafanaData:
+      ## enabled - true means Grafana will create/use a Persistent Volume Claim, persisting data beyond restarts
+      ## false means Grafana's data directory will use emptyDir ephemeral storage and get cleared upon restart
+      ##
+      enabled: false
+
+    ## prometheusData - Prometheus persistent volume claim for its data
+    ##
+    prometheusData:
+      ## enabled - true means Prometheus server will create/use a claim, persisting data beyond restarts
+      ## false means Prometheus' data directory will use emptyDir ephemeral storage and get cleared upon restart
+      ##
+      enabled: false

@@ -1,0 +1,238 @@
+{{- if .Values.prometheus.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: prometheus
+    heritage: {{ .Release.Service }}
+    name: {{ .Release.Name }}-prometheus
+    release: {{ .Release.Name }}
+  name: {{ .Release.Name }}-prometheus
+  namespace: {{ .Values.metadata.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+      name: {{ .Release.Name }}-prometheus
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        name: {{ .Release.Name }}-prometheus
+        release: {{ .Release.Name }}
+    spec:
+    {{- if .Values.prometheus.affinity }}
+      affinity:
+{{ toYaml .Values.prometheus.affinity | indent 8 }}
+    {{- end }}
+    {{- if .Values.image.pullSecrets.enabled }}
+      imagePullSecrets:
+      - name: {{ template "cassandra.fullname" . }}
+    {{- end }}
+    {{- if .Values.prometheus.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.prometheus.nodeSelector | indent 8 }}
+    {{- end }}
+    {{- if .Values.prometheus.securityContext }}
+      securityContext:
+{{ toYaml .Values.prometheus.securityContext | indent 8 }}
+    {{- end }}
+      terminationGracePeriodSeconds: 300
+      serviceAccountName: {{ .Release.Name }}-prometheus
+
+      initContainers:
+      ## Grafana init container - when .Values.prometheus.volumes.grafanaData.enabled is true, an init container
+      ##   changes ownership of Grafana persistent volume /var/lib/grafana to the uid defined under
+      ##   .Values.prometheus.grafana.securityContext.container.runAsUser prior to Grafana container startup
+      ##
+      {{- if .Values.prometheus.volumes.grafanaData.enabled }}
+        - name: {{ .Release.Name }}-init-grafana-data
+          command: ["chown", "-R", "{{ .Values.prometheus.grafana.securityContext.runAsUser }}:{{ .Values.prometheus.grafana.securityContext.runAsUser }}", "/var/lib/grafana"]
+          image: {{ .Values.prometheus.initGrafData.image.repo }}:{{ .Values.prometheus.initGrafData.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        {{- if .Values.prometheus.initGrafData.resources }}
+          resources:
+{{ toYaml .Values.prometheus.initGrafData.resources | indent 12 }}
+        {{- end }}
+        {{- if .Values.prometheus.initGrafData.securityContext }}
+          securityContext:
+{{ toYaml .Values.prometheus.initGrafData.securityContext | indent 12 }}
+        {{- end }}
+          volumeMounts:
+            - name: grafana-data
+              mountPath: /var/lib/grafana
+      {{- end }}
+      ## Prometheus init container - changes ownership of Prometheus persistent volume /data to the uid defined under
+      ##   .Values.prometheus.server.securityContext.runAsUser in an init container prior to Prometheus server startup
+      ##
+      {{- if .Values.prometheus.volumes.prometheusData.enabled }}
+        - name: {{ .Release.Name }}-init-prometheus-data
+          command: ["chown", "-R", "{{ .Values.prometheus.server.securityContext.container.runAsUser }}:{{ .Values.prometheus.server.securityContext.container.runAsUser }}", "/data"]
+          image: {{ .Values.prometheus.initPromData.image.repo }}:{{ .Values.prometheus.initPromData.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        {{- if .Values.prometheus.initPromData.resources }}
+          resources:
+{{ toYaml .Values.prometheus.initPromData.resources | indent 12 }}
+        {{- end }}
+        {{- if .Values.prometheus.initPromData.securityContext }}
+          securityContext:
+{{ toYaml .Values.prometheus.initPromData.securityContext | indent 12 }}
+        {{- end }}
+          volumeMounts:
+            - name: prometheus-data
+              mountPath: /data
+      {{- end }}
+
+      containers:
+      ## The configmapreload container monitors Prometheus ConfigMap changes and POSTs to a URL so Prometheus does not
+      ##   have to be restarted to update its config
+      ## Ref: https://github.com/jimmidyson/configmap-reload
+      ##
+        - name: {{ .Release.Name }}-configmap-reload
+          args:
+            - --volume-dir=/etc/config
+            - --webhook-url=http://localhost:9090/-/reload
+          image: {{ .Values.prometheus.configmapReload.image.repo }}:{{ .Values.prometheus.configmapReload.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        {{- if .Values.prometheus.configmapReload.resources }}
+          resources:
+{{ toYaml .Values.prometheus.configmapReload.resources | indent 12 }}
+        {{- end }}
+        {{- if .Values.prometheus.configmapReload.securityContext }}
+          securityContext:
+{{ toYaml .Values.prometheus.configmapReload.securityContext | indent 12 }}
+        {{- end }}
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/config
+              readOnly: true
+        ## Grafana - uses the datasource config file (datasource.yaml) to connect to Prometheus via localhost
+        ## The dashboard provider config file (provider.yaml) loads/updates/adds dashboards collected by its sidecar
+        ##   from shared storage
+        ##
+        - name: {{ .Release.Name }}-grafana
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-grafana
+                  key: admin-user
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-grafana
+                  key: admin-password
+          image: {{ .Values.prometheus.grafana.image.repo }}:{{ .Values.prometheus.grafana.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+          - name: grafana-port
+            containerPort: 3000
+        {{- if .Values.prometheus.grafana.resources }}
+          resources:
+{{ toYaml .Values.prometheus.grafana.resources | indent 12 }}
+        {{- end }}
+        {{- if .Values.prometheus.grafana.securityContext }}
+          securityContext:
+{{ toYaml .Values.prometheus.grafana.securityContext | indent 12 }}
+        {{- end }}
+          volumeMounts:
+            - name: grafana-datasource-config
+              mountPath: /etc/grafana/provisioning/datasources/
+            - name: grafana-dashboard-provider-config
+              mountPath: /etc/grafana/provisioning/dashboards/
+            - name: grafana-dashboard-shared-volume
+              mountPath: /var/lib/grafana/dashboards/prometheus/
+            - name: grafana-data
+              mountPath: /var/lib/grafana
+        ## Grafana sidecar - watches all configMaps in the same namespace and places ones with a label defined below
+        ##   into a shared folder for Grafana
+        ##
+        - name: {{ .Release.Name }}-grafana-dashboard-sidecar
+          env:
+            - name: LABEL
+              value: {{ .Release.Name }}-grafana-dashboard
+            - name: FOLDER
+              value: /tmp/dashboards
+          image: {{ .Values.prometheus.grafana.sidecar.image.repo }}:{{ .Values.prometheus.grafana.sidecar.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        {{- if .Values.prometheus.grafana.sidecar.resources }}
+          resources:
+{{ toYaml .Values.prometheus.grafana.sidecar.resources | indent 12 }}
+        {{- end }}
+        {{- if .Values.prometheus.grafana.securityContext }}
+          securityContext:
+{{ toYaml .Values.prometheus.grafana.securityContext | indent 12 }}
+        {{- end }}
+          volumeMounts:
+            - name: grafana-dashboard-shared-volume
+              mountPath: /tmp/dashboards
+        ## Prometheus server
+        ##
+        - name: {{ .Release.Name }}-prometheus-server
+          args:
+            - --storage.tsdb.retention={{ .Values.prometheus.server.retention }}
+            - --storage.tsdb.path=/data
+            - --config.file=/etc/config/prometheus.yml
+            - --web.console.libraries=/etc/prometheus/console_libraries
+            - --web.console.templates=/etc/prometheus/consoles
+            - --web.enable-lifecycle
+          image: {{ .Values.prometheus.server.image.repo }}:{{ .Values.prometheus.server.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          livenessProbe:
+            httpGet:
+              path: http://localhost:9090/-/healthy
+              port: 9090
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+          ports:
+            - name: prometheus-port
+              containerPort: 9090
+          readinessProbe:
+            httpGet:
+              path: http://localhost:9090/-/ready
+              port: 9090
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+        {{- if .Values.prometheus.server.resources }}
+          resources:
+{{ toYaml .Values.prometheus.server.resources | indent 12 }}
+        {{- end }}
+        {{- if .Values.prometheus.server.securityContext }}
+          securityContext:
+{{ toYaml .Values.prometheus.server.securityContext | indent 12 }}
+        {{- end }}
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/config
+            - name: prometheus-data
+              mountPath: /data
+
+      volumes:
+        - name: grafana-dashboard-provider-config
+          configMap:
+            name: {{ .Release.Name }}-grafana-dashboard-provider
+        - name: grafana-dashboard-shared-volume
+          emptyDir: {}
+        - name: grafana-datasource-config
+          configMap:
+            name: {{ .Release.Name }}-grafana-datasource
+        - name: grafana-data
+        {{- if .Values.prometheus.volumes.grafanaData.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-grafana-data
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+        - name: prometheus-config
+          configMap:
+            name: {{ .Release.Name }}-prometheus-config
+        - name: prometheus-data
+        {{- if .Values.prometheus.volumes.prometheusData.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-prometheus-data
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+{{- end -}}

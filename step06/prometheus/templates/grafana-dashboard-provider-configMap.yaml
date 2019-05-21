@@ -1,0 +1,29 @@
+{{- /*
+This config tells Grafana where to auto-discover new and changed dashboards
+For more info on provisioning, see: http://docs.grafana.org/administration/provisioning/
+*/ -}}
+{{- if .Values.prometheus.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: prometheus
+    heritage: {{ .Release.Service }}
+    name: {{ .Release.Name }}-grafana-dashboard-provider
+    release: {{ .Release.Name }}
+  name: {{ .Release.Name }}-grafana-dashboard-provider
+  namespace: {{ .Values.metadata.namespace }}
+data:
+  provider.yaml: |-
+    apiVersion: 1
+
+    providers:
+    - name: 'prometheus'
+      orgId: 1
+      folder: ''
+      type: file
+      disableDeletion: false
+      updateIntervalSeconds: 60
+      options:
+        path: /var/lib/grafana/dashboards/prometheus
+{{- end -}}
