@@ -9,16 +9,16 @@
 Telepresence is an open source tool that lets you run a service locally, while connecting that service into a remote
 Kubernetes cluster.
 
-In this step we're going to debug a simple service with telepresence.
+In this step we're going to debug a simple service with Telepresence.
 
 
 ### 1. A simple service example
 
-> Starting telepresence the first time may take a minute or two because Kubernetes needs to download the server-side
+> Starting Telepresence the first time may take a minute or two because Kubernetes needs to download the server-side
 image.
 
 Imagine you want to switch to running a cluster deployed service locally so that you can debug it. We can replace the
-version of the service running on cluster with the telepresence proxy, which will interact with the cluster as if it
+version of the service running on cluster with the Telepresence proxy, which will interact with the cluster as if it
 were the service. However it will actually just forward traffic to our dev box, effectively plugging us into the
 cluster.
 
@@ -176,7 +176,7 @@ This does three things:
     exit, the old pod will be restored)
 - --run tells Telepresence to run the local web server and hook it up to the networking proxy
 
-As long as you leave the HTTP server running inside telepresence it will be accessible from inside the Kubernetes
+As long as you leave the HTTP server running inside Telepresence it will be accessible from inside the Kubernetes
 cluster.
 
 Run a curl client to test the replacement:
