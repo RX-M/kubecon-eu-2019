@@ -1,0 +1,31 @@
+## DO NOT alter this configMap; it is required to federate metrics from the Prometheus Master instance
+## 
+{{- if .Values.prometheus.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: prometheus
+    heritage: {{ .Release.Service }}
+    name: {{ .Release.Name }}-prometheus-config
+    release: {{ .Release.Name }}
+  name: {{ .Release.Name }}-prometheus-config
+  namespace: {{ .Values.metadata.namespace }}
+data:
+  prometheus.yml: |-
+    global:
+      scrape_interval: {{ .Values.prometheus.server.config.scrape_interval }}
+      scrape_timeout: {{ .Values.prometheus.server.config.scrape_timeout }}
+
+    scrape_configs:
+    # Prometheus federation scrape configs
+    - job_name: 'federate'
+      honor_labels: true
+      metrics_path: '/federate'
+      params:
+        'match[]':
+          - '{kubernetes_namespace="{{ .Values.metadata.namespace }}"}'
+      static_configs:
+        - targets:
+          - 'prometheus-master.kube-system.svc.cluster.local:9090'
+{{- end -}}

@@ -1,0 +1,26 @@
+{{- if .Values.prometheus.enabled }}
+{{- if .Values.prometheus.volumes.grafanaData.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: prometheus
+    heritage: {{ .Release.Service }}
+    name: {{ .Release.Name }}-grafana-data
+    release: {{ .Release.Name }}
+  name: {{ .Release.Name }}-grafana-data
+  namespace: {{ .Values.metadata.namespace }}
+spec:
+  accessModes:
+    {{- range .Values.prometheus.volumes.grafanaData.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.prometheus.volumes.grafanaData.size | quote }}
+  {{- if .Values.prometheus.volumes.grafanaData.selector }}
+  selector:
+{{ toYaml .Values.prometheus.volumes.grafanaData.selector | indent 4 }}
+  {{- end }}
+{{- end }}
+{{- end -}}
