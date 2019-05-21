@@ -70,7 +70,7 @@ Our ossp:latest image is the one we want to push but docker is picky about image
 So the name we need is:  "reg.rx-m.net/cndev/wra.ossp:latest"
 
 The "latest" tag is the default so we can leave that out. Note the repo name "wra.ossp". To avoid interacting with other
-users in the session, use your initials and you lab machine ip to ensure you repo name is unique (wra.ossp is already
+users in the session, use your initials and your lab machine IP to ensure you repo name is unique (wra.ossp is already
 taken!). For example if you are Bob J. Smith on box 10.2.2.3 you should use the repo name: "bjs.10.2.2.3.ossp".
 
 We can use docker tag to add another name to the ossp image. Try it:
@@ -98,7 +98,7 @@ Great our image is up on Harbor.
 
 ### 3. Pull your image
 
-Next let's try pulling the image from contianerd. First delete any images on the containerd side:
+Next let's try pulling the image from containerd. First delete any images on the containerd side:
 
 ```
 ubuntu@ip-172-31-30-5:~$ sudo ctr image ls
