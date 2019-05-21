@@ -3,19 +3,22 @@
 # A Day in the life of a cloud native developer
 
 
-## Step 07 - Logging with Elasticsearch, Fluentd, and Kibana (EFK) Stack
+## Step 07 - Logging with Fluentd
 
-### 1. Adding Logging to the service
+Fluentd is a cross platform open-source data collection software project recently graduated and a top level project at
+the CNCF. Fluentd is written primarily in Ruby with C in places where performance is critical.
 
-### 2. Deploying the Helm Charts
+In this step we'll use fluentd to take the log events from our microservice and formard them to elasticsearch where we
+can view them with Kibana (the infamous EFK stack).
 
-To deploy the EFK stack, you will use your own values.yaml files to provide your own values to each of the helm charts.
-By passing the `-f` option, you can specify what values file to use. The Helm chart will parse the provided yaml file
-and apply any settings in it that are used by its templates. Helm will use the chart defaults for any values that are
-not provided in the user-defined values.yaml file.
 
-You're now ready to deploy the helm charts. First, deploy Elasticsearch, providing the values.yaml file under this
-step's elasticsearch directory:
+### 1. Deploying the Helm Charts
+
+The lab repo includes a helm chart that will deploy most of the EFK stack for you in your personal namespace. To deploy
+the EFK stack, you will use a values.yaml file to fill out the helm templates. Helm will use the chart defaults for any
+values that are not provided in the user-defined values.yaml file.
+
+First, deploy Elasticsearch, providing the values.yaml file under this step's elasticsearch directory:
 
 ```
 ubuntu@labsys:~$ helm install elastic/elasticsearch \
@@ -195,6 +198,11 @@ Select the following:
 - oss.project
 
 You should now see your GRPC service's logs in Kibana!
+
+One more piece of the observability triad to go, tracing application calls with Istio:
+[../step08/README.md](../step08/README.md)
+
+
 
 <br>
 
