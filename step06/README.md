@@ -19,7 +19,10 @@ In this step we'll use helm to deploy Prometheus and other resources needed to m
 
 ### 1. Render the Helm Charts
 
-Now run the helm templates for Prometheus under the step06 directory:
+Prometheus and Grafana will be deployed together under a single Helm chart using the same values.yaml file. In this
+case, Grafana is started as another container within the whole Prometheus metrics pod.
+
+Deploy Prometheus and Grafana using the Helm chart found under step06/prometheus in the kubecon-eu-2019 repo:
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ helm template ~/kubecon-eu-2019/step06/prometheus/. \
@@ -45,11 +48,15 @@ You render the helm chart with the following options:
   - `--set metadata.namespace=cal-172-31-18-59`- Tells Helm to render each manifest with your namespace
   - `--name cal-172-31-18-59-metrics` - Names the metrics deployment with your initials suffixed by "-metrics"
 
-This ensures that all helm-rendered assets are placed into the right namespace (though with your context set up in
+This ensures that all Helm-rendered assets are placed into the right namespace (though with your context set up in
 Kubectl, that is optional) and that they're easy to identify.
 
-Once deployed, ensure that the Helm chart elements were
-deployed successfully using `kubectl get all`:
+The namespacing for these components is especially important, as this deployment of Prometheus and Grafana will
+communicate with a pre-deployed master instance of Prometheus to retrieve metrics data about pods and resources under
+your own namespace. Given how many other people may be doing this exercise, you'll definitely appreciate having only
+your own namespace's resources returned!
+
+Once deployed, ensure that the Helm chart elements were deployed successfully using `kubectl get all`:
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl get all
