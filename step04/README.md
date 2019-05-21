@@ -539,6 +539,8 @@ ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ go run client.go a03552f567b6c11e981790
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
+> The loadbalancer service may take a couple of minutes to take effect. Until then, your client.go invocations may fail.
+
 That is pretty dang cool. Now delete it all ... :-)
 
 We can remove our service and our deployment using the delete command. By deleting the deployment we will automatically
