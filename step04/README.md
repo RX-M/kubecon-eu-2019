@@ -370,9 +370,9 @@ spec:
           protocol: TCP
 ```
 
-In K8s deployments on a time series of replicasets. Each replicaset owns a set of pods with the same creation template.
-Updating the deployment creates a new replicaset and the deployment (by default) performs a rolling upgrade to the new
-version. If problems occur you can rollback to the previous replicaset.
+In K8s, deployments own a time series of replicasets, each replicaset owns a set of pods with the same creation
+template. Updating the deployment creates a new replicaset and the deployment (by default) performs a rolling upgrade to
+the new version. If problems occur you can rollback to the previous replicaset.
 
 Create the deployment file above and deploy it with kubectl:
 
