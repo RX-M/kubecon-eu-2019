@@ -169,7 +169,7 @@ Now add the google cloud repo to the apt repo lists:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" \
-> | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+| sudo tee -a /etc/apt/sources.list.d/kubernetes.list
 
 deb http://apt.kubernetes.io/ kubernetes-xenial main
 
