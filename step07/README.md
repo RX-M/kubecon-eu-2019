@@ -126,7 +126,7 @@ release-name-prometheus         NodePort       10.100.50.212   <none>           
 ubuntu@labsys:~/kubecon-eu-2019$
 ```
 
-Here, you can see that Kibana has routed its port, 5601, to port 32536 on the cluster.
+Here, you can see that Kibana has routed its port, 5601, to port 32188 on the cluster.
 
 In your browser window, enter one of the external IP address or FQDN of one of the Kubernetes worker nodes with your
 port. You should be brought to the Kibana welcome page.
@@ -180,7 +180,7 @@ Click `Add a filter +`:
 
 Select the following:
 
-- kuberntes.container_name is ossp
+- kubernetes.container_name is ossp
 - kubernetes.namespace_name is `<Your Namespace>`
 
 And in the top search bar, look for **received**:
