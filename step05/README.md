@@ -378,7 +378,7 @@ Voila, a complete application up and running with configurable parameters for us
 regions and clouds.
 
 Our app is really getting easy to deploy, however we are falling down on the observability front, we need to be able to
-monitor, track and trace our applications activity: [step06/README.md](step06/README.md)
+monitor, track and trace our applications activity: [../step06/README.md](../step06/README.md)
 
 
 <br>
