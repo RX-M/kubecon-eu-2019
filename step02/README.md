@@ -351,7 +351,7 @@ ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
 Contianerized service up and running! Now we need to push this image up to a registry so that it can be used in CI/CD
-and other systems:  [step03/README.md](step03/README.md)
+and other systems:  [../step03/README.md](../step03/README.md)
 
 
 <br>
