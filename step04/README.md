@@ -97,7 +97,32 @@ You should consider upgrading via the 'pip install --upgrade pip' command.
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
-Before we can use the aws cli we need to setup auth keys and zone defaults:
+Before we can use the aws cli we need to setup auth keys and zone defaults. Down load the creds here:
+
+```
+ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ wget https://s3.eu-central-1.amazonaws.com/rx-m-kubecon-barcelona/kubecon-barcelona
+
+--2019-05-21 02:42:14--  https://s3.eu-central-1.amazonaws.com/rx-m-kubecon-barcelona/kubecon-barcelona
+Resolving s3.eu-central-1.amazonaws.com (s3.eu-central-1.amazonaws.com)... 52.219.72.8
+Connecting to s3.eu-central-1.amazonaws.com (s3.eu-central-1.amazonaws.com)|52.219.72.8|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 116 [binary/octet-stream]
+Saving to: ‘kubecon-barcelona’
+
+kubecon-barcelona                       100%[==============================================================================>]     116  --.-KB/s    in 0s
+
+2019-05-21 02:42:14 (5.88 MB/s) - ‘kubecon-barcelona’ saved [116/116]
+
+ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ cat kubecon-barcelona
+
+[default]
+aws_access_key_id = XXXXXXXXXXXXXXXX
+aws_secret_access_key = XXXXXXXXXXXXXXXX
+
+ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
+```
+
+Now run aws configure and use the creds from the file downloaded:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ aws configure
@@ -218,7 +243,7 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
-List the nodes availible:
+List the nodes available:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ kubectl get nodes
