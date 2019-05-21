@@ -558,7 +558,7 @@ ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 
 Our app runs in the cloud but we have to maintain various resources to roll it out. Wouldn't it be nice if we
 could package everything up and deploy the entire app in one fell swoop? Helm to the rescue:
-[step05/README.md](step05/README.md)
+[../step05/README.md](../step05/README.md)
 
 
 <br>
