@@ -21,14 +21,14 @@ Navigate to the Istio console (known as Kiali): http://kiali.rx-m.net:15029/kial
 
 Login as admin/admin.
 
-[login](./images/login.png)
+![login](./images/login.png)
 
 Locate you namespace and drill down to you application:
 
-[no sidecar](./images/nos.png)
+![no sidecar](./images/nos.png)
 
 Notice that Istio complains that there is no sidecar. This is because namespaces configured to use Istio will
-automatically have an envoy sidecars injected into every pod to create the routing mesh.
+automatically have an Envoy sidecar injected into every pod to create the routing mesh.
 
 
 ### 2. Enabling Istio
