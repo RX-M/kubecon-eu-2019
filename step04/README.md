@@ -102,8 +102,8 @@ Before we can use the aws cli we need to setup auth keys and zone defaults:
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ aws configure
 
-AWS Access Key ID [None]: AKIAWJUO4MRB44Y5TXEM
-AWS Secret Access Key [None]: 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
+AWS Access Key ID [None]: XXXXXXXXXXXXXXXX
+AWS Secret Access Key [None]: XXXXXXXXXXXXXXXXXXxx
 Default region name [None]: eu-central-1
 Default output format [None]: json
 
@@ -116,7 +116,7 @@ To test the setup try checking your identity with the AWS Security Token service
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ aws sts get-caller-identity
 
 {
-    "UserId": "AIDAWJUO4MRBSQFZISD5Z",
+    "UserId": "XXXXXXXXXXXXXXX",
     "Arn": "arn:aws:iam::433017611331:user/kubecon-barcelona-eks",
     "Account": "433017611331"
 }
