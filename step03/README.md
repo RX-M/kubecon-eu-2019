@@ -16,7 +16,7 @@ In this step we're going to push our ossproject image to the Harbor registry ser
 
 ### 1. Login to the Harbor registry with docker
 
-The lab environment has a Harbor instance running at reg.rx-m.net. We're going to use it to push and pull images to. In
+The lab environment has a Harbor instance running at reg.rx-m.net. We're going to use it as a target for pushing and pulling images. In
 the next step we will use these images with an AWS hosted Kubernetes cluster.
 
 A repository has been created in the Harbor registry for us called "cndev" and we can login with the creds:
