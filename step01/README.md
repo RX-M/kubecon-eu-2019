@@ -9,17 +9,16 @@
 gRPC is a modern RPC system that allows interfaces to evolve gracefully, often without impacting existing clients, much
 like a REST API. Because gRPC is based on HTTP/2 it is easy to integrate with common web based tools and infrastructure.
 Perhaps one of the best things about gRPC is that it uses the powerful but concise Protocol Buffers IDL (interface
-description language). IDLs make describing applications interfaces a pleasure. Oh, also it doesn't hurt to mention that
-gRPC is fast, typically an order of magnitude or more faster than the equivalent REST API (your mileage may vary).
+description language). IDLs make describing application interfaces a pleasure. Oh, also it doesn't hurt to mention that
+gRPC is fast, typically an order of magnitude (or more) faster than the equivalent REST API (your mileage may vary).
 
 
 ### 1. Install Go
 
-We'll build our microservice in Go. Go is the language gRPC is written in, and though not required, writing gRPC
-services in Go is convenient. Kubernetes and Docker are also written in Go and it is a generally popular language in the
-container and microservices spaces.
+We'll build our microservice in Go. Go is the language Kubernetes and Docker are written in, and though not required, writing gRPC
+services in Go is convenient. Go is a generally popular language in the container and microservices spaces.
 
-We'll use Go 1.12, clone, extract and install the release:
+We'll use Go 1.12. Clone, extract and install the release:
 
 ```
 ubuntu@ip-172-31-45-121:~/kubecon-eu-2019$ curl -sLO https://dl.google.com/go/go1.12.linux-amd64.tar.gz
