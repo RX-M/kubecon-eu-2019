@@ -21,7 +21,7 @@ In this step we're going to deploy our ossproject app to a hosted EKS Kubernetes
 ### 1. Install AWS support
 
 Cloud providers all have their custom command line tools used for gaining secure access to resources in their respective
-clouds. To use our EKS cluster we need to install the AWS CLI, a Python app. Install pip3 the Python 3 package manager:
+clouds. To use our EKS cluster we need to install the AWS CLI, a Python app. Install pip3, the Python 3 package manager:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ sudo apt-get -y install python3-pip
@@ -337,7 +337,7 @@ Great, we have an empty namespace ready to use. Now to deploy our service.
 ### 4. Deploy your containerized service
 
 Now that we have access and a namespace we can create a K8s deployment to startup some pods to run our service in. K8s
-pods package small sets of containers (one often enough) together to be deployed as a unit.
+pods package small sets of containers together to be deployed as a unit.
 
 Here's what our k8s deployment will look like:
 
@@ -435,7 +435,7 @@ would trigger a CI event and, if successful, eventually a new deployment.
 
 ### 5. Create a service to provide access to the pods
 
-If we want to access our services at present we have to lookup the IP of one of the pods and gain access to it. Because
+If we want to access our services at present we have to lookup the IP of one of the pods to gain access to it. Because
 most K8s clusters run on a SDN network that is not directly reachable from outside the cluster we need another approach.
 Fortunately we can create a service in K8s. A service is an abstraction that gives us a virtual IP address that load
 balances over whichever pods are implementing it.
