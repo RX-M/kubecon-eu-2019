@@ -15,12 +15,12 @@ In this step we're going to deploy our ossproject app using helm.
 
 ### 1. Install Helm
 
-There are two parts to Helm: The Helm client (helm) and the Helm server (Tiller), the latter of which is not required.
+There are two parts to Helm: The Helm client (helm) and the Helm server (Tiller), the latter is not required.
 The Helm client can be downloaded from the releases page of the Helm repo: (https://github.com/helm/helm/releases) but
 the repo also holds an installer script that will automatically grab the latest version of the Helm client and install
 it locally.
 
-Install helm:
+Download the helm installer:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get > get_helm.sh
@@ -49,9 +49,9 @@ ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
 **DO NOT** follow the final instruction to configure helm, which will launch the Tiller server as a pod on our cluster,
-which we _will not_ be using.
+we _will not_ be using it.
 
-We can use the `version` command to make sure the client is working:
+We can use the `version` command to make sure the helm client is working:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ helm version -c
@@ -122,7 +122,8 @@ ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 
 ### 3. Create a service template
 
-The templates/ directory houses YAML definitions for Services, Deployments and other resources you might need. We can delete the definitions we do not need and overwrite the others with our configs from the last step.
+The templates/ directory houses YAML definitions for Services, Deployments and other resources you might need. We can delete the 
+definitions we do not want and overwrite the others with our configs from the last step.
 
 Take a look at the service template:
 
@@ -150,7 +151,8 @@ ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
 As you can see helm augments the basic K8s config syntax with parameters in the form of double curly brace enclosed
-variable names. To try out variables we'll leave the `name: {{ include "ossp.fullname" . }}` in place but replace everything else with our service definition from the last step.
+variable names. To try out variables we'll leave the `name: {{ include "ossp.fullname" . }}` in place but replace everything 
+else with our service definition from the last step.
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ vim ossp/templates/service.yaml
