@@ -325,7 +325,7 @@ unpacking docker.io/library/ossp:latest (sha256:490b962d255fe9f65f742651e80d740f
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
 ```
 
-Now use ctr to run you service in its new container:
+Now use ctr to run your service in its new container:
 
 ```
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ sudo ctr image ls
@@ -336,7 +336,6 @@ docker.io/rxmllc/hello:latest application/vnd.docker.distribution.manifest.v2+js
 
 ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ sudo ctr run --net-host docker.io/library/ossp:latest ossproject
 
-2019/05/20 21:34:06 Received: fluentd
 
 ```
 
