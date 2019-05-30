@@ -70,7 +70,7 @@ Our ossp:latest image is the one we want to push but docker is picky about image
 So the name we need is:  "reg.rx-m.net/cndev/wra.ossp:latest"
 
 The "latest" tag is the default so we can leave that out. Note the repo name "wra.ossp". To avoid interacting with other
-users in the session, use your initials and your lab machine IP to ensure you repo name is unique (wra.ossp is already
+users in the session, use your initials and your lab machine IP to ensure your repo name is unique (wra.ossp is already
 taken!). For example if you are Bob J. Smith on box 10.2.2.3 you should use the repo name: "bjs.10.2.2.3.ossp".
 
 We can use docker tag to add another name to the ossp image. Try it:
