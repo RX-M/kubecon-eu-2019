@@ -5,11 +5,11 @@
 
 ## Step 07 - Logging with Fluentd
 
-Fluentd is a cross platform open-source data collection software project recently graduated and a top level project at
-the CNCF. Fluentd is written primarily in Ruby with C in places where performance is critical.
+Fluentd is a cross platform open-source data collection tool, having recently graduated it is now a top level CNCF project. Fluentd 
+is written primarily in Ruby with C in places where performance is critical.
 
 In this step we'll use Fluentd to take the log events from our microservice and forward them to Elasticsearch where we
-can view them with Kibana (the infamous EFK stack).
+can view them with Kibana (this combination of tools is often known as the EFK stack).
 
 
 ### 1. Deploying the Helm Charts
@@ -30,7 +30,7 @@ ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
 Next, deploy Kibana. Kibana provides a visualization layer for Elasticsearch data, making it an excellent compliment to
-any Elasticsearch deployment. This time, pass the --name flag and put the name of your namespace:
+any Elasticsearch deployment. This time, pass the --name flag and use the name of your namespace:
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ helm template ./step07/kibana/. --name cal-172-31-18-59  | kubectl apply -f -
@@ -131,7 +131,7 @@ ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ go run client.go a806b89387ba211e98f95
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
-Once you're done sending them, grab the logs from each of your ossp deployment pods:
+After generating some traffic, examine the logs from each of your ossp deployment pods:
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl logs pod/cal-172-31-18-59-ossp-67469746c-9mhtp
