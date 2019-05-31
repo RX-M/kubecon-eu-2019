@@ -6,21 +6,20 @@
 
 ## Step 06 - Prometheus and Grafana
 
-Prometheus is an open source monitoring and alerting application, often employed to provide application and node-level
-metrics monitoring to Cloud Native application deployments. When paired with Grafana, a powerful visualization tool that
-meshes well with Prometheus, users are given deep insight into the health of their applications.
+Prometheus is an open source monitoring and alerting application, often employed to monitor Cloud Native applications and platforms. 
+Grafana is a web based visualization tool typically paired with Prometheus to allow users to visualize metrics data and trends. While
+Prometheus includes a basic GUI, Grafana offers a much richer set of features for graphing and dashboarding.
 
-Prometheus works by continually collecting, or scraping, open metrics endpoints made available by applications, looking
-at any exposed endpoint at /metrics to collect pertinent data. Data can then be sorted inside the Prometheus GUI,
-where the user can design queries that can aggregate more useful metrics like averages, sums and histograms.
+Prometheus works by continually collecting (aka. scraping) open metrics endpoints made available by applications and platform 
+components. Exposed endpoints often use the "/metrics" route. Collected data can be sorted inside the Prometheus GUI,
+where the user can design queries that can aggregate metrics using averages, sums and histograms.
 
-In this step we'll use helm to deploy Prometheus and other resources needed to monitor applications in K8s.
+In this step we'll use helm to deploy Prometheus and other resources needed to monitor our Kubernetes application.
 
 
 ### 1. Render the Helm Charts
 
-Prometheus and Grafana will be deployed together under a single Helm chart using the same values.yaml file. In this
-case, Grafana is started as another container within the whole Prometheus metrics pod.
+The Prometheus Helm chart will deploy both Prometheus and Grafana as sperate containers within the same Kubernetes pod.
 
 Deploy Prometheus and Grafana using the Helm chart found under step06/prometheus in the kubecon-eu-2019 repo:
 
@@ -43,13 +42,12 @@ deployment.apps/cal-172-31-18-59-metrics-prometheus created
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
-You render the helm chart with the following options:
+Be sure to render the helm chart with the following options:
 
-  - `--set metadata.namespace=cal-172-31-18-59`- Tells Helm to render each manifest with your namespace
-  - `--name cal-172-31-18-59-metrics` - Names the metrics deployment with your initials suffixed by "-metrics"
+  - `--set metadata.namespace=cal-172-31-18-59`- Using your personal namespace created previously
+  - `--name cal-172-31-18-59-metrics` - To names the metrics deployment with your initials/ip suffixed by "-metrics"
 
-This ensures that all Helm-rendered assets are placed into the right namespace (though with your context set up in
-Kubectl, that is optional) and that they're easy to identify.
+This ensures that all Helm-rendered assets are placed into the right namespace and that they're easy to identify.
 
 The namespacing for these components is especially important, as this deployment of Prometheus and Grafana will
 communicate with a pre-deployed master instance of Prometheus to retrieve metrics data about pods and resources under
@@ -80,12 +78,12 @@ replicaset.apps/cal-172-31-18-59-ossp-67469746c                 1         1     
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
-Wait a moment while the metrics resources come up and online.
+You may need to give the metrics fabric a moment to come online.
 
 
 ### 2. Accessing Your Metrics
 
-Take a look at the service deployed with your Prometheus Helm chart. It presents four ports numbers in two mappings.
+Take a look at the service deployed with your Prometheus Helm chart. It presents four ports in two mappings.
 Port 9090 in this example is mapped to 31116, while Port 3000 is mapped to 30199.
 
 ```
