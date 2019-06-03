@@ -41,9 +41,8 @@ deployment.apps/cal-172-31-18-59-kibana created
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
-Finally, deploy Fluentd. This will allow Kubernetes, and your service, to feed event data into Elasticsearch For this
-step, use the `--set metadata.namespace` to your namespace to ensure that all the Fluentd instances start within your
-own namespace:
+Finally, deploy the Fluentd helm chart provided in this repo. This will allow Kubernetes, and your service, to feed
+event data into Elasticsearch:
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ helm template ./step07/fluentd/. | kubectl apply -f -
@@ -91,13 +90,21 @@ configmap/fluentd-sidecar   1      39s
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
+Your helm charts are deployed, but you're not done setting up Fluentd.
+
+
 ### 2. Deploying the Fluentd sidecar
 
-The Fluentd helm chart you deployed only deployed some RBAC related items. The helm chart it is based on actually
-deploys a daemonset, which ensures that there is a pod available on every single node in the cluster - something that an
-SRE, not a Cloud Native Dev, should be concerned about. In order to deploy the actual Fluentd instance that will serve
-logs to Elasticsearch, you will need to add a Fluentd sidecar to your OSSP application pod. This will ensure that a
-Fluentd container will always be deployed alongside your OSSP application container.
+The Fluentd helm chart you deployed only deployed some RBAC related items that will support the actual Fluentd
+operation. The original helm chart it is based on actually deploys a daemonset, which ensures that there is a pod
+available on every single node in the cluster - something that an SRE, not a Cloud Native Dev, should be concerned
+about.
+
+In order to deploy the actual Fluentd instance that will serve logs to Elasticsearch, you will need to add a Fluentd
+sidecar container to your OSSP application pod. This will ensure that a Fluentd container will always be deployed
+alongside your OSSP application container.
+
+This will be done by adding the following yaml block to your OSSP application deployment:
 
 ```yaml
       - name: fluentd
@@ -126,13 +133,17 @@ Fluentd container will always be deployed alongside your OSSP application contai
       serviceAccountName: cal-172-31-18-59-fluentd-elasticsearch
 ```
 
-- A new container named Fluentd will be added to the OSSP pod
-- The container needs to access the host /var/log and /var/lib/docker/containers log directories
-- The Fluentd container also needs to mount its configuration file which is stored inside the `fluentd-sidecar` configmap
-- The container needs to use the serviceAccount that was deployed with helm. Be sure to use the name of the serviceAccount resource created above!
+- A new container named Fluentd will be added to the OSSP pod, running a Fluentd image from that is already set up to
+forward events to Elasticsearch
+- The container needs to access the host /var/log and /var/lib/docker/containers log directories, so you declare two
+hostPath volumes that the Fluentd container mounts to read the files found in those paths
+- The Fluentd container also needs to mount its configuration file which is stored inside the `fluentd-sidecar` configmap,
+so that is declared as a configMap volume along with the hostPath volumes and mounted by the Fluentd container.
+- To allow the Fluentd container to perform its functions, it needs to use the serviceAccount that was deployed with helm.
+Be sure to use the name of the serviceAccount resource created above!
 
 Use `kubectl edit` to edit the ossp deployment, pasting the block above just below the `terminationMessagePolicy: File`
-line in the deployment edit:
+line in the deployment edit interface:
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl edit deploy cal-172-31-18-59-ossp
