@@ -5,7 +5,7 @@
 
 ## Step 07 - Logging with Fluentd
 
-Fluentd is a cross platform open-source data collection tool, having recently graduated it is now a top level CNCF project. Fluentd 
+Fluentd is a cross platform open-source data collection tool, having recently graduated it is now a top level CNCF project. Fluentd
 is written primarily in Ruby with C in places where performance is critical.
 
 In this step we'll use Fluentd to take the log events from our microservice and forward them to Elasticsearch where we
@@ -46,67 +46,208 @@ step, use the `--set metadata.namespace` to your namespace to ensure that all th
 own namespace:
 
 ```
-ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ helm template ./step07/fluentd/. \
---name cal-172-31-18-59 --set metadata.namespace=cal-172-31-18-59  | kubectl apply -f -
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ helm template ./step07/fluentd/. | kubectl apply -f -
 
-configmap/cal-172-31-18-59-fluentd-elasticsearch created
+configmap/fluentd-sidecar created
 serviceaccount/cal-172-31-18-59-fluentd-elasticsearch created
 clusterrole.rbac.authorization.k8s.io/cal-172-31-18-59-fluentd-elasticsearch created
 clusterrolebinding.rbac.authorization.k8s.io/cal-172-31-18-59-fluentd-elasticsearch created
-daemonset.apps/cal-172-31-18-59-fluentd-elasticsearch created
 
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
+
+Take a note of that serviceaccount that was created, you will need to use it for one of the following steps.
 
 Wait a few minutes for all of your deployed sources to come online, and soon you'll be able to receive data from it.
 
 ```
-ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl get all
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl get all,cm
 
-NAME                                                      READY   STATUS    RESTARTS   AGE
-pod/cal-172-31-18-59-fluentd-elasticsearch-9qh9v          1/1     Running   0          37s
-pod/cal-172-31-18-59-fluentd-elasticsearch-fv59v          1/1     Running   0          37s
-pod/cal-172-31-18-59-fluentd-elasticsearch-gl2dc          1/1     Running   0          37s
-pod/cal-172-31-18-59-fluentd-elasticsearch-mb92n          1/1     Running   0          37s
-pod/cal-172-31-18-59-fluentd-elasticsearch-mbxq8          1/1     Running   0          37s
-pod/cal-172-31-18-59-fluentd-elasticsearch-nl8w7          1/1     Running   0          37s
-pod/cal-172-31-18-59-fluentd-elasticsearch-nvtwx          1/1     Running   0          37s
-pod/cal-172-31-18-59-fluentd-elasticsearch-sj5hv          1/1     Running   0          37s
-pod/cal-172-31-18-59-fluentd-elasticsearch-x4h22          1/1     Running   0          37s
-pod/cal-172-31-18-59-fluentd-elasticsearch-zmmmr          1/1     Running   0          37s
-pod/cal-172-31-18-59-kibana-7c7c9df89f-7h5kt              1/1     Running   0          83s
-pod/cal-172-31-18-59-metrics-prometheus-9bdf95b56-dzngc   4/4     Running   0          6m46s
-pod/cal-172-31-18-59-ossp-67469746c-9mhtp                 1/1     Running   0          15m
-pod/elasticsearch-master-0                                1/1     Running   0          106s
+NAME                                       READY   STATUS    RESTARTS   AGE
+pod/elasticsearch-master-0                 1/1     Running   0          7m26s
+pod/cal-172-31-18-59-kibana-6877866855-n54ls   1/1     Running   0          7m10s
+pod/cal-172-31-18-59-ossp-84994b7d47-kx2cs     1/1     Running   0          8m47s
 
-NAME                                          TYPE           CLUSTER-IP       EXTERNAL-IP                                                                 PORT(S)                         AGE
-service/cal-172-31-18-59-kibana               NodePort       10.100.135.60    <none>                                                                      5601:30892/TCP                  83s
-service/cal-172-31-18-59-metrics-prometheus   NodePort       10.100.251.109   <none>                                                                      9090:31444/TCP,3000:32491/TCP   6m46s
-service/cal-172-31-18-59-ossp                 LoadBalancer   10.100.101.251   a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com   50088:31811/TCP                 15m
-service/elasticsearch-master                  ClusterIP      10.100.225.68    <none>                                                                      9200/TCP,9300/TCP               106s
-service/elasticsearch-master-headless         ClusterIP      None             <none>                                                                      9200/TCP                        106s
+NAME                                    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
+service/elasticsearch-master            ClusterIP   10.98.196.63     <none>        9200/TCP,9300/TCP   7m26s
+service/elasticsearch-master-headless   ClusterIP   None             <none>        9200/TCP            7m26s
+service/cal-172-31-18-59-kibana             NodePort    10.99.40.50      <none>        5601:32543/TCP      7m10s
+service/cal-172-31-18-59-ossp               NodePort    10.104.190.192   <none>        50088:30924/TCP     8m47s
 
-NAME                                                    DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
-daemonset.apps/cal-172-31-18-59-fluentd-elasticsearch   10        10        10      10           10          <none>          37s
+NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/cal-172-31-18-59-kibana   1/1     1            1           7m10s
+deployment.apps/cal-172-31-18-59-ossp     1/1     1            1           8m47s
 
-NAME                                                  DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/cal-172-31-18-59-kibana               1         1         1            1           83s
-deployment.apps/cal-172-31-18-59-metrics-prometheus   1         1         1            1           6m46s
-deployment.apps/cal-172-31-18-59-ossp                 1         1         1            1           15m
+NAME                                             DESIRED   CURRENT   READY   AGE
+replicaset.apps/cal-172-31-18-59-kibana-6877866855   1         1         1       7m10s
+replicaset.apps/cal-172-31-18-59-ossp-84994b7d47     1         1         1       8m47s
 
-NAME                                                            DESIRED   CURRENT   READY   AGE
-replicaset.apps/cal-172-31-18-59-kibana-7c7c9df89f              1         1         1       83s
-replicaset.apps/cal-172-31-18-59-metrics-prometheus-9bdf95b56   1         1         1       6m46s
-replicaset.apps/cal-172-31-18-59-ossp-67469746c                 1         1         1       15m
+NAME                                    READY   AGE
+statefulset.apps/elasticsearch-master   1/1     7m26s
 
-NAME                                    DESIRED   CURRENT   AGE
-statefulset.apps/elasticsearch-master   1         1         106s
+NAME                        DATA   AGE
+configmap/fluentd-sidecar   1      39s
 
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
+### 2. Deploying the Fluentd sidecar
 
-### 2. Generating Events
+The Fluentd helm chart you deployed only deployed some RBAC related items. The helm chart it is based on actually
+deploys a daemonset, which ensures that there is a pod available on every single node in the cluster - something that an
+SRE, not a Cloud Native Dev, should be concerned about. In order to deploy the actual Fluentd instance that will serve
+logs to Elasticsearch, you will need to add a Fluentd sidecar to your OSSP application pod. This will ensure that a
+Fluentd container will always be deployed alongside your OSSP application container.
+
+```yaml
+      - name: fluentd
+        image: gcr.io/fluentd-elasticsearch/fluentd:v2.5.2
+        env:
+          - name:  FLUENTD_ARGS
+            value: -c /fluentd/etc/fluentd-sidecar.conf
+        volumeMounts:
+        - name: fluentd-sidecar
+          mountPath: /fluentd/etc
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: varlog
+          mountPath: /var/log
+      volumes:
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: fluentd-sidecar
+        configMap:
+          name: fluentd-sidecar          
+      serviceAccountName: cal-172-31-18-59-fluentd-elasticsearch
+```
+
+- A new container named Fluentd will be added to the OSSP pod
+- The container needs to access the host /var/log and /var/lib/docker/containers log directories
+- The Fluentd container also needs to mount its configuration file which is stored inside the `fluentd-sidecar` configmap
+- The container needs to use the serviceAccount that was deployed with helm. Be sure to use the name of the serviceAccount resource created above!
+
+Use `kubectl edit` to edit the ossp deployment, pasting the block above just below the `terminationMessagePolicy: File`
+line in the deployment edit:
+
+```
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl edit deploy cal-172-31-18-59-ossp
+
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+  creationTimestamp: "2019-05-21T19:09:51Z"
+  generation: 1
+  labels:
+    app: ossp
+  name: cal-172-31-18-59-ossp
+  namespace: cal
+  resourceVersion: "56261"
+  selfLink: /apis/extensions/v1beta1/namespaces/cal/deployments/cal-172-31-18-59-ossp
+  uid: 29bd7922-8633-11e9-a3cc-000c29057440
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: ossp
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: ossp
+    spec:
+      containers:
+      - image: ossp:latest
+        imagePullPolicy: Never
+        name: ossp
+        ports:
+        - containerPort: 50088
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      - name: fluentd
+        image: gcr.io/fluentd-elasticsearch/fluentd:v2.5.2
+        env:
+          - name:  FLUENTD_ARGS
+            value: -c /fluentd/etc/fluentd-sidecar.conf
+        volumeMounts:
+        - name: fluentd-sidecar
+          mountPath: /fluentd/etc
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: varlog
+          mountPath: /var/log
+      volumes:
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: fluentd-sidecar
+        configMap:
+          name: fluentd-sidecar
+      serviceAccountName: cal-172-31-18-59-fluentd-elasticsearch
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+...
+
+:wq
+
+deployment.extensions/cal-172-31-18-59-ossp edited
+
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
+```
+
+Check your pods now:
+
+```
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl get pods
+
+NAME                                   READY   STATUS    RESTARTS   AGE
+elasticsearch-master-0                 1/1     Running   0          12m
+cal-172-31-18-59-kibana-6877866855-n54ls   1/1     Running   0          12m
+cal-172-31-18-59-ossp-74b67c4d57-pd8dw     2/2     Running   0          68s
+
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
+```
+
+Your OSSP pod is now much younger than the rest of your pods, and now reports 2/2 ready containers: Fluentd should now
+be sending events!
+
+Check the Fluentd container logs, using `-c fluentd` to specify which container to retrieve logs from
+
+```
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl logs release-name-ossp-74b67c4d57-pd8dw -c fluentd
+
+2019-05-21 19:23:02 +0000 [info]: parsing config file is succeeded path="/fluentd/etc/fluentd-sidecar.conf"
+...
+2019-05-21 19:23:05 +0000 [info]: #0 [fluentd-containers.log] following tail of /var/log/containers/etcd-ubuntu_kube-system_etcd-04901c62d219659c3c73c6a7a23a6af6742fcb202c097f2715a5961a5fdbaa90.log
+2019-05-21 19:23:05 +0000 [info]: #0 disable filter chain optimization because [Fluent::Plugin::ConcatFilter, Fluent::Plugin::KubernetesMetadataFilter] uses `#filter_stream` method.
+2019-05-21 19:23:05 +0000 [info]: #0 fluentd worker is now running worker=0
+```
+
+No errors, so that means Fluentd should now be ready to go!
+
+
+### 3. Generating Events
 
 Using your `client.go` program to hit the gRPC microservice, send some events corresponding to some of the growing number
 of graduated CNCF projects:
@@ -148,7 +289,7 @@ ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 Keep these events in mind, you will see them again in a more colorful way in the next step.
 
 
-### 3. Visualizing log data
+### 4. Visualizing log data
 
 With events sent Elasticsearch through Fluentd, you can now use Kibana to check the events that are coming in from all
 parts of your Kubernetes cluster (within your namespace).
