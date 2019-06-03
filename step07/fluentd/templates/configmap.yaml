@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-sidecar
+data:
+  fluentd-sidecar.conf: "<source>\n  @id fluentd-containers.log\n  @type tail\n  path
+    /var/log/containers/*.log\n  pos_file /var/log/containers.log.pos\n  tag raw.kubernetes.*\n
+    \ read_from_head true\n  <parse>\n\t@type multi_format\n\t<pattern>\n\t  format
+    json\n\t  time_key time\n\t  time_format %Y-%m-%dT%H:%M:%S.%NZ\n\t</pattern>\n\t<pattern>\n\t
+    \ format /^(?<time>.+) (?<stream>stdout|stderr) [^ ]* (?<log>.*)$/\n\t  time_format
+    %Y-%m-%dT%H:%M:%S.%N%:z\n\t</pattern>\n  </parse>\n</source>\n\n# Detect exceptions
+    in the log output and forward them as one log entry.\n<match raw.kubernetes.**>\n
+    \ @id raw.kubernetes\n  @type detect_exceptions\n  remove_tag_prefix raw\n  message
+    log\n  stream stream\n  multiline_flush_interval 5\n  max_bytes 500000\n  max_lines
+    1000\n</match>\n\n# Concatenate multi-line logs\n<filter **>\n  @id filter_concat\n
+    \ @type concat\n  key message\n  multiline_end_regexp /\\n$/\n  separator \"\"\n</filter>\n\n#
+    Enriches records with Kubernetes metadata\n<filter kubernetes.**>\n  @id filter_kubernetes_metadata\n
+    \ @type kubernetes_metadata\n</filter>\n\n# Fixes json fields in Elasticsearch\n<filter
+    kubernetes.**>\n  @id filter_parser\n  @type parser\n  key_name log\n  reserve_data
+    true\n  remove_key_name_field true\n  <parse>\n\t@type multi_format\n\t<pattern>\n\t
+    \ format json\n\t</pattern>\n\t<pattern>\n\t  format none\n\t</pattern>\n  </parse>\n</filter>\n\n<match
+    **>\n  @id elasticsearch\n  @type elasticsearch\n  @log_level info\n  include_tag_key
+    true\n  type_name _doc\n  host elasticsearch-master\n  port 9200\n  scheme http\n
+    \ ssl_version TLSv1_2\n  ssl_verify true\n  logstash_format true\n  logstash_prefix
+    logstash\n  reconnect_on_error true\n  <buffer>\n\t@type file\n\tpath /var/log/fluentd-buffers/kubernetes.system.buffer\n\tflush_mode
+    interval\n\tretry_type exponential_backoff\n\tflush_thread_count 2\n\tflush_interval
+    5s\n\tretry_forever\n\tretry_max_interval 30\n\tchunk_limit_size 2M\n\tqueue_limit_length
+    8\n\toverflow_action block\n  </buffer>\n</match>\n"
