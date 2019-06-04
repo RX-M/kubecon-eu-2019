@@ -79,11 +79,11 @@ secret:
 #   secret_key: password
 
 rbac:
-  create: true
+  create: false
 
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
-  create: true
+  create: false
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ""
