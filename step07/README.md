@@ -31,7 +31,8 @@ ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
 Next, deploy Kibana. Kibana provides a visualization layer for Elasticsearch data, making it an excellent compliment to
-any Elasticsearch deployment. This time, pass the --name flag and use the name of your namespace:
+any Elasticsearch deployment. This time, pass the --name flag and use the name you've used for the other Helm
+deployments:
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ helm template ./step07/kibana/. --name release-name  | kubectl apply -f -
@@ -49,44 +50,40 @@ event data into Elasticsearch:
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ helm template ./step07/fluentd/. | kubectl apply -f -
 
 configmap/fluentd-sidecar created
-serviceaccount/release-name-fluentd-elasticsearch created
-clusterrole.rbac.authorization.k8s.io/release-name-fluentd-elasticsearch created
-clusterrolebinding.rbac.authorization.k8s.io/release-name-fluentd-elasticsearch created
 
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
-
-Take a note of that serviceaccount that was created, you will need to use it for one of the following steps.
 
 Wait a few minutes for all of your deployed sources to come online, and soon you'll be able to receive data from it.
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl get all,cm
 
-NAME                                       READY   STATUS    RESTARTS   AGE
-pod/elasticsearch-master-0                 1/1     Running   0          7m26s
-pod/release-name-kibana-6877866855-n54ls   1/1     Running   0          7m10s
-pod/release-name-ossp-84994b7d47-kx2cs     1/1     Running   0          8m47s
+NAME                                           READY   STATUS    RESTARTS   AGE
+pod/elasticsearch-master-0                     1/1     Running   0          118s
+pod/release-name-kibana-6877866855-vcfpv       1/1     Running   0          106s
+pod/release-name-ossp-6984b7d78-7xmln          1/1     Running   0          4m20s
+pod/release-name-prometheus-5c4c95954d-snb6x   4/4     Running   0          3m9s
 
-NAME                                    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
-service/elasticsearch-master            ClusterIP   10.98.196.63     <none>        9200/TCP,9300/TCP   7m26s
-service/elasticsearch-master-headless   ClusterIP   None             <none>        9200/TCP            7m26s
-service/release-name-kibana             NodePort    10.99.40.50      <none>        5601:32543/TCP      7m10s
-service/release-name-ossp               NodePort    10.104.190.192   <none>        50088:30924/TCP     8m47s
+NAME                                    TYPE            CLUSTER-IP       EXTERNAL-IP                                                                 PORT(S)                         AGE
+service/elasticsearch-master            ClusterIP       10.106.185.211   <none>                                                                      9200/TCP,9300/TCP               118s
+service/elasticsearch-master-headless   ClusterIP       None             <none>                                                                      9200/TCP                        118s
+service/release-name-kibana             NodePort        10.99.53.87      <none>                                                                      5601:30235/TCP                  106s
+service/release-name-ossp               LoadBalancer    10.101.68.99     a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com   50088:31811/TCP                 4m20s
+service/release-name-prometheus         NodePort        10.110.114.179   <none>                                                                      9090:31901/TCP,3000:30861/TCP   3m9s
 
-NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/release-name-kibana   1/1     1            1           7m10s
-deployment.apps/release-name-ossp     1/1     1            1           8m47s
+NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/release-name-kibana       1/1     1            1           106s
+deployment.apps/release-name-ossp         1/1     1            1           4m20s
+deployment.apps/release-name-prometheus   1/1     1            1           3m9s
 
-NAME                                             DESIRED   CURRENT   READY   AGE
-replicaset.apps/release-name-kibana-6877866855   1         1         1       7m10s
-replicaset.apps/release-name-ossp-84994b7d47     1         1         1       8m47s
+NAME                                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/release-name-kibana-6877866855       1         1         1       106s
+replicaset.apps/release-name-ossp-6984b7d78          1         1         1       4m20s
+replicaset.apps/release-name-prometheus-5c4c95954d   1         1         1       3m9s
 
 NAME                                    READY   AGE
-statefulset.apps/elasticsearch-master   1/1     7m26s
-
-NAME                        DATA   AGE
-configmap/fluentd-sidecar   1      39s
+statefulset.apps/elasticsearch-master   1/1     118s
 
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
@@ -105,12 +102,12 @@ built the ossp service with a scratch base image - one with no filesystem, tools
 In order to use basic shell redirection, you will need to change the base image to something that includes a shell.
 
 Open your Dockerfile and change the isolated container from the scratch base image to Alpine, the same version you built
-the ossp biny on originally:
+the ossp binary on originally:
 
 ```
-ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ vim Dockerfile
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ vim Dockerfile
 
-ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$ cat Dockerfile
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ cat Dockerfile
 
 FROM golang:1.12.5-alpine3.9 as server-build
 WORKDIR /go/src/app
@@ -126,13 +123,13 @@ COPY --from=server-build /go/src/app/server /server
 EXPOSE 50088
 ENTRYPOINT [ "/server" ]
 
-ubuntu@ip-172-31-30-5:~/kubecon-eu-2019$
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
 Now, build the Dockerfile, tagging this image _v0.2_:
 
 ```
-ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ docker build -t ossp:v0.2 .
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ sudo docker build -t ossp:v0.2 .
 
 Sending build context to Docker daemon    148MB
 Step 1/11 : FROM golang:1.12.5-alpine3.9 as server-build
@@ -189,21 +186,21 @@ ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 Before pushing it up to Harbor, give it a tag that conforms with all of the image name requirements:
 
 ```
-ubuntu@ip-172-31-30-5:~$ sudo docker image tag ossp:v0.2 reg.rx-m.net/cndev/cal.ossp:v0.2
+ubuntu@ip-172-31-18-59:~$ sudo docker image tag ossp:v0.2 reg.rx-m.net/cndev/wra.ossp:v0.2
 
-ubuntu@ip-172-31-30-5:~$
+ubuntu@ip-172-31-18-59:~$
 ```
 
 Now push it!
 
 ```
-ubuntu@ip-172-31-30-5:~$ sudo docker image push reg.rx-m.net/cndev/cal.ossp:v0.2
+ubuntu@ip-172-31-18-59:~$ sudo docker image push reg.rx-m.net/cndev/wra.ossp:v0.2
 
-The push refers to repository [reg.rx-m.net/cndev/cal.ossp]
+The push refers to repository [reg.rx-m.net/cndev/wra.ossp]
 1d20e816dced: Pushed
 v0.2: digest: sha256:1d20e816dcedef3c63ac3b4ee3cdc8875f8aa34a3cef67bdf7b87a52c7b297 size: 528
 
-ubuntu@ip-172-31-30-5:~$
+ubuntu@ip-172-31-18-59:~$
 ```
 
 Great, the revised ossp service container is now up on Harbor.
@@ -259,8 +256,10 @@ so that is declared as a configMap volume along with the hostPath volumes and mo
 - To give the Fluentd container permission to function, it needs to use the serviceAccount that was deployed with helm.
 Be sure to use the name of the serviceAccount resource created above!
 
-Use `kubectl edit` to edit the ossp deployment, pasting the block above just below the `terminationMessagePolicy: File`
-line in the deployment edit interface:
+Use `kubectl edit` to edit the ossp deployment, making sure to do the following:
+
+- Update the ossp container image to use the `v0.2` tag
+- Insert the block above just after the `terminationMessagePolicy: File` line of the original ossp container
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl edit deploy release-name-ossp
@@ -274,66 +273,64 @@ metadata:
   labels:
     app: ossp
   name: release-name-ossp
-  namespace: cal
-  resourceVersion: "56261"
-  selfLink: /apis/extensions/v1beta1/namespaces/cal/deployments/release-name-ossp
+  namespace: wra-172-31-30-5
+  resourceVersion: "2531"
+  selfLink: /apis/extensions/v1beta1/namespaces/wra-172-31-30-5/deployments/release-name-ossp
   uid: 29bd7922-8633-11e9-a3cc-000c29057440
-spec:
-  progressDeadlineSeconds: 600
-  replicas: 1
-  revisionHistoryLimit: 10
-  selector:
-    matchLabels:
-      app: ossp
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
-  template:
-    metadata:
-      creationTimestamp: null
-      labels:
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
         app: ossp
-    spec:
-      containers:
-      - image: reg.rx-m.net/cndev/cal.ossp:v0.2
-        imagePullPolicy: Always
-        name: ossp
-        ports:
-        - containerPort: 50088
-          protocol: TCP
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        command:
-        - "/bin/sh"
-        - "-c"
-        - "/server 2>&1 | tee /tmp/log/ossp.log"  
-        volumeMounts:
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: ossp
+      spec:
+        containers:
+        - image: reg.rx-m.net/cndev/wra.ossp:v0.2
+  # Update the image to use the new v0.2 tag
+          imagePullPolicy: Never
+          name: ossp
+          ports:
+          - containerPort: 50088
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+  # Insert the updated container OSSP container spec and new Fluentd container spec here
+          command:
+          - "/bin/sh"
+          - "-c"
+          - "/server 2>&1 | tee /tmp/log/ossp.log"
+          volumeMounts:
+          - name: varlog
+            mountPath: /tmp/log
+        - name: fluentd
+          image: gcr.io/fluentd-elasticsearch/fluentd:v2.5.2
+          env:
+            - name: FLUENTD_ARGS
+              value: -c /fluentd/etc/fluentd-sidecar.conf
+          volumeMounts:
+          - name: fluentd-sidecar
+            mountPath: /fluentd/etc
+          - name: varlog
+            mountPath: /tmp/log
+        volumes:
         - name: varlog
-          mountPath: /tmp/log
-      - name: fluentd
-        image: gcr.io/fluentd-elasticsearch/fluentd:v2.5.2
-        env:
-          - name: FLUENTD_ARGS
-            value: -c /fluentd/etc/fluentd-sidecar.conf
-        volumeMounts:
+          emptyDir: {}
         - name: fluentd-sidecar
-          mountPath: /fluentd/etc
-        - name: varlog
-          mountPath: /tmp/log
-      volumes:
-      - name: varlog
-        emptyDir: {}
-      - name: fluentd-sidecar
-        configMap:
-          name: fluentd-sidecar
-      dnsPolicy: ClusterFirst
-      restartPolicy: Always
-      schedulerName: default-scheduler
-      securityContext: {}
-      terminationGracePeriodSeconds: 30
+          configMap:
+            name: fluentd-sidecar
+        dnsPolicy: ClusterFirst
 ...
 
 :wq
@@ -350,10 +347,11 @@ Check your pods now:
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl get pods
 
-NAME                                   READY   STATUS    RESTARTS   AGE
-elasticsearch-master-0                 1/1     Running   0          12m
-release-name-kibana-6877866855-n54ls   1/1     Running   0          12m
-release-name-ossp-74b67c4d57-pd8dw     2/2     Running   0          68s
+NAME                                       READY   STATUS    RESTARTS   AGE
+elasticsearch-master-0                     1/1     Running   0          6m45s
+release-name-kibana-6877866855-vcfpv       1/1     Running   0          6m33s
+release-name-ossp-bc7574b99-5tnfc          2/2     Running   0          11s
+release-name-prometheus-5c4c95954d-snb6x   4/4     Running   0          7m56s
 
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
@@ -364,16 +362,17 @@ be sending events!
 Check the Fluentd container logs, using `-c fluentd` to specify which container to retrieve logs from
 
 ```
-ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl logs release-name-ossp-74b67c4d57-pd8dw -c fluentd
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl logs release-name-ossp-bc7574b99-5tnfc -c fluentd
 
-2019-05-21 19:23:02 +0000 [info]: parsing config file is succeeded path="/fluentd/etc/fluentd-sidecar.conf"
+2019-06-07 17:12:29 +0000 [info]: parsing config file is succeeded path="/fluentd/etc/fluentd-sidecar.conf"
 ...
-2019-05-21 19:23:05 +0000 [info]: #0 [fluentd-containers.log] following tail of /var/log/containers/etcd-ubuntu_kube-system_etcd-04901c62d219659c3c73c6a7a23a6af6742fcb202c097f2715a5961a5fdbaa90.log
-2019-05-21 19:23:05 +0000 [info]: #0 disable filter chain optimization because [Fluent::Plugin::ConcatFilter, Fluent::Plugin::KubernetesMetadataFilter] uses `#filter_stream` method.
-2019-05-21 19:23:05 +0000 [info]: #0 fluentd worker is now running worker=0
+2019-06-07 17:12:29 +0000 [info]: #0 starting fluentd worker pid=10 ppid=1 worker=0
+2019-06-07 17:12:29 +0000 [info]: #0 following tail of /tmp/log/ossp.log
+2019-06-07 17:12:29 +0000 [info]: #0 fluentd worker is now running worker=0
+
 ```
 
-No errors, so that means Fluentd should now be ready to go!
+Fluentd is now tailing the ossp.log file under /tmp/log/, it should now be ready to go!
 
 
 ### 4. Generating Events
@@ -382,21 +381,21 @@ Using your `client.go` program to hit the gRPC microservice, send some events co
 of graduated CNCF projects:
 
 ```
-ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ go run client.go a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com fluentd
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ go run client.go a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com:31811 fluentd
 
-2019/06/04 08:45:31 Projects: name:"fluentd" custodian:"cncf"
+2019/06/07 17:13:39 Projects: name:"fluentd" custodian:"cncf"
 
-ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ go run client.go a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com containerd
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ go run client.go a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com:31811 containerd
 
-2019/06/04 08:45:38 Projects: name:"containerd" custodian:"cncf"
+2019/06/07 17:13:44 Projects: name:"containerd" custodian:"cncf"
 
-ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ go run client.go a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com kubernetes
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ go run client.go a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com:31811 kubernetes
 
-2019/06/04 08:45:45 Projects: name:"kubernetes" custodian:"cncf"
+2019/06/07 17:13:54 Projects: name:"kubernetes" custodian:"cncf"
 
-ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ go run client.go a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com prometheus
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ go run client.go a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com:31811 prometheus
 
-2019/06/04 08:45:52 Projects: name:"prometheus" custodian:"cncf"
+2019/06/07 17:14:01 Projects: name:"prometheus" custodian:"cncf"
 
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
@@ -404,12 +403,12 @@ ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 After generating some traffic, examine the logs from each of your ossp deployment pods:
 
 ```
-ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl logs release-name-ossp-5884696bbd-shk6z -c ossp
+ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl logs release-name-ossp-bc7574b99-5tnfc -c ossp
 
-2019/06/04 02:11:48 Received: fluentd
-2019/06/04 02:11:53 Received: containerd
-2019/06/04 02:12:02 Received: kubernetes
-2019/06/04 02:12:35 Received: prometheus
+2019/06/07 02:11:48 Received: fluentd
+2019/06/07 02:11:53 Received: containerd
+2019/06/07 02:12:02 Received: kubernetes
+2019/06/07 02:12:35 Received: prometheus
 
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
@@ -430,12 +429,12 @@ Retrieve the nodeport for Kibana with `kubectl get svc`:
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl get svc
 
-NAME                                  TYPE           CLUSTER-IP       EXTERNAL-IP                                                                 PORT(S)                         AGE
-release-name-kibana               NodePort       10.100.135.60    <none>                                                                      5601:30892/TCP                  8m33s
-release-name-metrics-prometheus   NodePort       10.100.251.109   <none>                                                                      9090:31444/TCP,3000:32491/TCP   13m
-release-name-ossp                 LoadBalancer   10.100.101.251   a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com   50088:31811/TCP                 22m
-elasticsearch-master                  ClusterIP      10.100.225.68    <none>                                                                      9200/TCP,9300/TCP               8m56s
-elasticsearch-master-headless         ClusterIP      None             <none>                                                                      9200/TCP                        8m56s
+NAME                            TYPE            CLUSTER-IP       EXTERNAL-IP                                                                 PORT(S)                         AGE
+elasticsearch-master            ClusterIP       10.106.185.211   <none>                                                                      9200/TCP,9300/TCP               2m
+elasticsearch-master-headless   ClusterIP       None             <none>                                                                      9200/TCP                        2m
+release-name-kibana             NodePort        10.99.53.87      <none>                                                                      5601:30235/TCP                  2m
+release-name-ossp               LoadBalancer    10.101.68.99     a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com   50088:31811/TCP                 6m
+release-name-prometheus         NodePort        10.110.114.179   <none>                                                                      9090:31901/TCP,3000:30861/TCP   5m
 
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
@@ -500,7 +499,7 @@ In the left menu bar, click `Discover` again:
 
 ![The events you sent to the ossp service in step 2](./images/ossp-event.PNG)
 
-You should now see your GRPC service's logs in Kibana! Take a minute to look around; with its current setting Fluentd is
+You should now see your ossp service's logs in Kibana! Take a minute to look around; with its current setting Fluentd is
 capture all activity coming to all containers within your namespace.
 
 One more piece of the observability triad to go, tracing application calls with Istio:
