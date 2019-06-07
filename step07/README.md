@@ -17,7 +17,7 @@ can view them with Kibana (this combination of tools is often known as the EFK s
 
 The lab repo includes helm charts that will deploy the EFK stack for you in your personal namespace.
 
-First, deploy Elasticsearch, providing the values.yaml file under this step's elasticsearch directory:
+First, deploy Elasticsearch, using the helm chart under this step's elasticsearch directory:
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ helm template ./step07/elasticsearch/. | kubectl apply -f -
@@ -31,7 +31,7 @@ ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
 Next, deploy Kibana. Kibana provides a visualization layer for Elasticsearch data, making it an excellent compliment to
-any Elasticsearch deployment. This time, pass the --name flag and use the name you've used for the other Helm
+any deployment of Elasticsearch. This time, pass the `--name` flag and use the name you've used for the other Helm
 deployments:
 
 ```
@@ -94,8 +94,8 @@ Your helm charts are deployed, but you're not done setting up Fluentd.
 
 Before you can use logging, you first need to enable logging on the ossp pod. Currently, the ossp service outputs
 directly to STDOUT, which is redirected to a series of logs found in /var/log. As a developer, you may not have access
-to these. There are two options: You can change your code for the ossp service to write a file, or use shell
-redirection. In the interest of time, go for the shell redirection.
+to these logs in that directory. There are two options: You can change your code for the ossp service to log to a file,
+or use shell redirection. In the interest of time, go for the shell redirection.
 
 In order to enable that, however, you will need to create a container that has a shell. If you recall from step 2, you
 built the ossp service with a scratch base image - one with no filesystem, tools or other programs - including a shell.
@@ -203,21 +203,20 @@ v0.2: digest: sha256:1d20e816dcedef3c63ac3b4ee3cdc8875f8aa34a3cef67bdf7b87a52c7b
 ubuntu@ip-172-31-18-59:~$
 ```
 
-Great, the revised ossp service container is now up on Harbor.
+Great, the v0.2 of your ossp service container is now up on Harbor.
 
 
 ### 3. Deploying the Fluentd sidecar
 
-The Fluentd helm chart you deployed only deployed some RBAC related items that will support the actual Fluentd
-operation. The original helm chart it is based on actually deploys a daemonset, which ensures that there is a pod
-available on every single node in the cluster - something that an SRE, not a Cloud Native Dev, should be concerned
-about.
+The Fluentd helm chart you deployed only deployed a configmap that will support the actual Fluentd operation. The
+original helm chart it is based on actually deploys a daemonset, which ensures that there is a pod available on every
+single node in the cluster - something that an SRE, not a Cloud Native Dev, should be concerned about.
 
 In order to deploy the actual Fluentd instance that will serve logs to Elasticsearch, you will need to add a Fluentd
-sidecar container to your ossp application pod. This will ensure that a Fluentd container will always be deployed
-alongside your ossp application container.
+sidecar container to your ossp service pod. This will ensure that a Fluentd container will always be deployed
+alongside your ossp service container.
 
-This will be done by adding the following yaml block to your ossp application deployment:
+This will be done by adding the following yaml block to your existing ossp deployment:
 
 ```yaml
         command:
@@ -245,21 +244,20 @@ This will be done by adding the following yaml block to your ossp application de
           name: fluentd-sidecar          
 ```
 
-- A command that will override the ossp container's entrypoint that will allow it to redirect logs to a file at
+- A command that will override the ossp container's entrypoint, forcing the ossp service to redirect logs to a file at
 `/tmp/log/ossp.log`
 - A new container named Fluentd will be added to the ossp pod, running a Fluentd image from that is already set up to
 forward events to Elasticsearch
-- Both containers will mount a directory, varlog, to both of their filesystems to share logs, so an ephimeral `varlog`
-emptyDir volume is declared
-- The Fluentd container also needs to mount its configuration file which is stored inside the `fluentd-sidecar` configmap,
-so that is declared as a configMap volume along with the hostPath volumes and mounted by the Fluentd container.
-- To give the Fluentd container permission to function, it needs to use the serviceAccount that was deployed with helm.
-Be sure to use the name of the serviceAccount resource created above!
+- Both containers will mount a directory, varlog, to their filesystems to share logs, so an ephimeral `varlog` emptyDir
+volume is declared. This directory shares the lifespan of the pod, and will be deleted if the pod dies.
+- The Fluentd container also needs to mount its configuration file which is stored inside the `fluentd-sidecar` configmap.
+The configmap is declared as a configMap volume and fluentd-sidecar.conf is mounted in the Fluentd container under
+/fluentd/etc/
 
 Use `kubectl edit` to edit the ossp deployment, making sure to do the following:
 
 - Update the ossp container image to use the `v0.2` tag
-- Insert the block above just after the `terminationMessagePolicy: File` line of the original ossp container
+- Insert the yaml block above just after the `terminationMessagePolicy: File` line of the original ossp container
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl edit deploy release-name-ossp
@@ -296,8 +294,8 @@ metadata:
           app: ossp
       spec:
         containers:
+  # Update the image to use the new v0.2 tag        
         - image: reg.rx-m.net/cndev/wra.ossp:v0.2
-  # Update the image to use the new v0.2 tag
           imagePullPolicy: Never
           name: ossp
           ports:
@@ -340,8 +338,6 @@ deployment.extensions/release-name-ossp edited
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
-Be sure to also change the `ossp` container's image to use the `v0.2` tagged image you pushed earlier!
-
 Check your pods now:
 
 ```
@@ -356,10 +352,10 @@ release-name-prometheus-5c4c95954d-snb6x   4/4     Running   0          7m56s
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
-Your ossp pod is now much younger than the rest of your pods, and now reports 2/2 ready containers: Fluentd should now
-be sending events!
+Your ossp pod is now much younger than the rest of your pods, and now reports 2/2 ready containers, indicating that
+Fluentd was deployed alongside the ossp container.
 
-Check the Fluentd container logs, using `-c fluentd` to specify which container to retrieve logs from
+Check the Fluentd container logs with `kubectl logs`, using `-c fluentd` to specify which container to take logs from:
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl logs release-name-ossp-bc7574b99-5tnfc -c fluentd
@@ -372,13 +368,13 @@ ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl logs release-name-ossp-bc7574b
 
 ```
 
-Fluentd is now tailing the ossp.log file under /tmp/log/, it should now be ready to go!
+Fluentd found its configuration under /fluentd/etc/ and is now tailing the ossp.log file under /tmp/log/, it should now
+be ready to send events to Elasticsearch!
 
 
 ### 4. Generating Events
 
-Using your `client.go` program to hit the gRPC microservice, send some events corresponding to some of the growing number
-of graduated CNCF projects:
+Use your `client.go` program to send some events to the ossp service:
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ go run client.go a806b89387ba211e98f95020deaa3a09-548583198.eu-central-1.elb.amazonaws.com:31811 fluentd
@@ -400,7 +396,7 @@ ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ go run client.go a806b89387ba211e98f95
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
-After generating some traffic, examine the logs from each of your ossp deployment pods:
+After generating some traffic, examine the logs from your ossp deployment pod:
 
 ```
 ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$ kubectl logs release-name-ossp-bc7574b99-5tnfc -c ossp
@@ -458,7 +454,9 @@ ubuntu@ip-172-31-18-59:~/kubecon-eu-2019$
 ```
 
 In your browser window, enter one of the external IP address or FQDN of one of the Kubernetes worker nodes with your
-Kibana port. You should be brought to the Kibana welcome page.
+Kibana port, like: `http://35.156.190.95:30235`
+
+You should be brought to the Kibana welcome page.
 
 ![Welcome to Kibana](./images/kibana-welcome.PNG)
 
@@ -476,7 +474,7 @@ already present.
 
 The EFK stack is actually an alternative to the ELK (Elasticsearch, Logstash, and Kibana). The only difference is that
 Fluentd takes Logstash's place. By default, Fluentd's Elasticsearch plugin will make it act identical to Logstash, thus
-causing Fluentd to send all events in the same manner as logstash would.
+causing Fluentd to send all events in the same manner as Logstash would.
 
 Type "logstash" into the Index Pattern text box:
 
