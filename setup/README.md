@@ -130,7 +130,7 @@ Run `aws sts get-caller-identity` and validate that your Arn contains `eks-sre`:
 ubuntu@labsys:~$ aws sts get-caller-identity
 
 {
-    "UserId": "AIDAWJUO4MRB2ETRY566R",
+    "UserId": "XXXXXXXXXXXXXXXXXXXX",
     "Account": "433017611331",
     "Arn": "arn:aws:iam::433017611331:user/eks-sre"
 }
