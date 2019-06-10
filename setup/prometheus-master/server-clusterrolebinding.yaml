@@ -10,12 +10,12 @@ metadata:
     release: prometheus-master
     chart: prometheus-8.11.2
     heritage: Tiller
-  name: prometheus-master-server
+  name: prometheus-master
 subjects:
   - kind: ServiceAccount
-    name: prometheus-master-server
+    name: prometheus-master
     namespace: kube-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: prometheus-master-server
+  name: prometheus-master

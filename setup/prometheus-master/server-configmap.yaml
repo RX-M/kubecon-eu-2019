@@ -4,20 +4,20 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   labels:
-    component: "server"
+    component: "master"
     app: prometheus
     release: prometheus-master
     chart: prometheus-8.11.2
     heritage: Tiller
-  name: prometheus-master-server
+  name: prometheus-master
 data:
   alerts: |
     {}
-    
+
   prometheus.yml: |
     global:
       evaluation_interval: 1m
-      scrape_interval: 1m
+      scrape_interval: 30s
       scrape_timeout: 10s
     rule_files:
     - /etc/config/rules
@@ -158,10 +158,6 @@ data:
       kubernetes_sd_configs:
       - role: pod
       relabel_configs:
-      - action: keep
-        regex: true
-        source_labels:
-        - __meta_kubernetes_pod_annotation_prometheus_io_scrape
       - action: replace
         regex: (.+)
         source_labels:
@@ -184,27 +180,6 @@ data:
         source_labels:
         - __meta_kubernetes_pod_name
         target_label: kubernetes_pod_name
-    
-    alerting:
-      alertmanagers:
-      - kubernetes_sd_configs:
-          - role: pod
-        tls_config:
-          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_namespace]
-          regex: default
-          action: keep
-        - source_labels: [__meta_kubernetes_pod_label_app]
-          regex: prometheus
-          action: keep
-        - source_labels: [__meta_kubernetes_pod_label_component]
-          regex: alertmanager
-          action: keep
-        - source_labels: [__meta_kubernetes_pod_container_port_number]
-          regex:
-          action: drop
+
   rules: |
     {}
-    

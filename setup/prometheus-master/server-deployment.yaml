@@ -4,44 +4,31 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
-    component: "server"
+    component: "master"
     app: prometheus
     release: prometheus-master
     chart: prometheus-8.11.2
     heritage: Tiller
-  name: prometheus-master-server
+  name: prometheus-master
 spec:
   selector:
     matchLabels:
-      component: "server"
+      component: "master"
       app: prometheus
       release: prometheus-master
   replicas: 1
   template:
     metadata:
       labels:
-        component: "server"
+        component: "master"
         app: prometheus
         release: prometheus-master
         chart: prometheus-8.11.2
         heritage: Tiller
     spec:
-      serviceAccountName: prometheus-master-server
-      initContainers:
-      - name: "init-chown-data"
-        image: "busybox:latest"
-        imagePullPolicy: "IfNotPresent"
-        resources:
-            {}
-            
-        # 65534 is the nobody user that prometheus uses.
-        command: ["chown", "-R", "65534:65534", "/data"]
-        volumeMounts:
-        - name: storage-volume
-          mountPath: /data
-          subPath: ""
+      serviceAccountName: prometheus-master
       containers:
-        - name: prometheus-server-configmap-reload
+        - name: prometheus-master-configmap-reload
           image: "jimmidyson/configmap-reload:v0.2.2"
           imagePullPolicy: "IfNotPresent"
           args:
@@ -55,10 +42,11 @@ spec:
               mountPath: /etc/config
               readOnly: true
 
-        - name: prometheus-server
-          image: "prom/prometheus:v2.9.2"
+        - name: prometheus-master
+          image: "prom/prometheus:v2.8.1"
           imagePullPolicy: "IfNotPresent"
           args:
+            - --storage.tsdb.retention.time=1h
             - --config.file=/etc/config/prometheus.yml
             - --storage.tsdb.path=/data
             - --web.console.libraries=/etc/prometheus/console_libraries
@@ -91,7 +79,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: prometheus-master-server
+            name: prometheus-master
         - name: storage-volume
-          persistentVolumeClaim:
-            claimName: prometheus-master-server
+          emptyDir:
+            {}
