@@ -27,5 +27,5 @@ data:
           - '{kubernetes_namespace="{{ .Values.metadata.namespace }}"}'
       static_configs:
         - targets:
-          - 'prometheus-master.kube-system.svc.cluster.local:9090'
+          - 'localhost:9090'
 {{- end -}}
